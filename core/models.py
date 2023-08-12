@@ -3,11 +3,41 @@ from django.db import models
 
 
 class Proposal(models.Model):
-    subject = models.CharField(max_length=128)
-    description = models.CharField(max_length=512)
-    problem = models.CharField(max_length=5000)
-    solution = models.CharField(max_length=5000)
-    budget = models.CharField(max_length=5000)
+    title = models.CharField(max_length=128)
+    problem = models.TextField(null=True, blank=True)
+    solution = models.TextField(null=True, blank=True)
+    outputs = models.TextField(null=True, blank=True)
+    team  = models.TextField(null=True, blank=True)
+    
+    capacity_development = models.TextField(null=True, blank=True)
+    scalability = models.TextField(null=True, blank=True)
+    ethical_implications = models.TextField(null=True, blank=True)
+    conflict_of_interest = models.TextField(null=True, blank=True)
+    summary_budget = models.TextField(null=True, blank=True)
+    detailed_budget = models.TextField(null=True, blank=True)
+    workplan = models.TextField(null=True, blank=True)
+
+class Score(models.Model):
+    problem = models.IntegerField(null=True)
+    solution = models.IntegerField(null=True)
+    outputs = models.IntegerField(null=True)
+    team  = models.IntegerField(null=True)
+    
+    capacity_development = models.IntegerField(null=True)
+    scalability = models.IntegerField(null=True)
+    ethical_implications = models.IntegerField(null=True)
+    conflict_of_interest = models.IntegerField(null=True)
+    summary_budget = models.IntegerField(null=True)
+    detailed_budget = models.IntegerField(null=True)
+    workplan = models.IntegerField(null=True)
+
+    strengths = models.TextField(null=True)
+    weaknesses = models.TextField(null=True)
+    comment = models.TextField(null=True)
+
+
+    user = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL)
+    proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     
     
 class File(models.Model):
