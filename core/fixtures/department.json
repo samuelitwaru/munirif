@@ -1,0 +1,77 @@
+[
+    {
+        "model": "core.department",
+        "pk": 1,
+        "fields": {
+            "name": "Crop Sciences",
+            "faculty_id": 3 
+        }
+    },
+    {
+        "model": "core.department",
+        "pk": 2,
+        "fields": {
+            "name": "Animal Sciences",
+            "faculty_id": 3 
+        }
+    },
+    {
+        "model": "core.department",
+        "pk": 3,
+        "fields": {
+            "name": "Agricultural Engineering",
+            "faculty_id": 3 
+        }
+    },
+
+    {
+        "model": "core.department",
+        "pk": 4,
+        "fields": {
+            "name": "Finance And Accounting",
+            "faculty_id": 4 
+        }
+    },
+    {
+        "model": "core.department",
+        "pk": 5,
+        "fields": {
+            "name": "Marketing And Logistics Management",
+            "faculty_id": 4
+        }
+    },
+    {
+        "model": "core.department",
+        "pk": 6,
+        "fields": {
+            "name": "Tourism And Hospitality Management",
+            "faculty_id": 4
+        }
+    },
+
+    {
+        "model": "core.department",
+        "pk": 7,
+        "fields": {
+            "name": "Computer and Information Sciences",
+            "faculty_id": 5 
+        }
+    },
+    {
+        "model": "core.department",
+        "pk": 8,
+        "fields": {
+            "name": "Mechanical Engineering",
+            "faculty_id": 5
+        }
+    },
+    {
+        "model": "core.department",
+        "pk": 9,
+        "fields": {
+            "name": "Electrical Engineering and automation",
+            "faculty_id": 5
+        }
+    }
+  ]
+  

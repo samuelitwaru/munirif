@@ -1,0 +1,38 @@
+[
+    {
+      "model": "core.faculty",
+      "pk": 1,
+      "fields": {
+        "name": "Faculty of Education"
+      }
+    },
+    {
+      "model": "core.faculty",
+      "pk": 2,
+      "fields": {
+        "name": "Faculty of Science"
+      }
+    },
+    {
+        "model": "core.faculty",
+        "pk": 3,
+        "fields": {
+          "name": "Faculty of Agriculture and Environmental Sciences"
+        }
+    },
+    {
+        "model": "core.faculty",
+        "pk": 4,
+        "fields": {
+          "name": "Faculty of Management Science"
+        }
+    },
+    {
+        "model": "core.faculty",
+        "pk": 5,
+        "fields": {
+          "name": "Faculty of Technoscience"
+        }
+    }
+  ]
+  

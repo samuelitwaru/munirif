@@ -1,0 +1,30 @@
+[
+    {
+      "model": "core.qualification",
+      "pk": 1,
+      "fields": {
+        "name": "PhD"
+      }
+    },
+    {
+      "model": "core.qualification",
+      "pk": 2,
+      "fields": {
+        "name": "Masters"
+      }
+    },
+    {
+        "model": "core.qualification",
+        "pk": 3,
+        "fields": {
+          "name": "Bachelors"
+        }
+    },
+    {
+        "model": "core.qualification",
+        "pk": 4,
+        "fields": {
+          "name": "Certificate"
+        }
+    }
+  ]
