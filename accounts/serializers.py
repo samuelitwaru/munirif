@@ -7,7 +7,7 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer
 from core.serializers import ProfileSerializer
 
 class UserSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer()
+    profile = ProfileSerializer(required=False)
     class Meta:
         model = User
         fields = '__all__'

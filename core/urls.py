@@ -6,6 +6,7 @@ from .views import FacultyViewSet, ProposalViewSet, QualificationViewSet
 from munirif import router
 
 # Create a router and register our viewset with it.
+router.register(r'users', UserViewSet)
 router.register(r'proposals', ProposalViewSet)
 router.register(r'users', UserViewSet)
 router.register(r'faculties', FacultyViewSet)
