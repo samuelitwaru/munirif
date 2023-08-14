@@ -13,7 +13,8 @@ from rest_framework.authtoken.models import Token
 
 from accounts.utils import get_user_from_bearer_token
 from core.models import Profile
-from .serializers import PasswordChangeSerializer, UserSerializer
+from utils.mails import send_html_email
+from .serializers import PasswordChangeSerializer, PasswordResetSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from .serializers import CustomAuthTokenSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -85,7 +86,7 @@ class LoginView(APIView):
             token, _ = Token.objects.get_or_create(user=user)
             return Response({'token': token.key, 'user': UserSerializer(user).data})
         else:
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'error': ['Invalid credentials']}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class LogoutView(APIView):
@@ -110,15 +111,13 @@ class DeleteAccountView(APIView):
         return Response({"message": "Account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
 
+
 @api_view(['POST'])
 # @permission_classes([IsAuthenticated])
 def change_password(request):
     serializer = PasswordChangeSerializer(data=request.data)
     if serializer.is_valid():
-        # print(dir(request))
-        # user = request.user
         user = get_user_from_bearer_token(request)
-        print(user)
         old_password = serializer.validated_data['old_password']
         new_password = serializer.validated_data['new_password']
 
@@ -132,5 +131,28 @@ def change_password(request):
         update_session_auth_hash(request, user)  # Keep the user authenticated
 
         return Response({'detail': 'Password successfully changed.'}, status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+def reset_password(request):
+    serializer = PasswordResetSerializer(data=request.data)
+    if serializer.is_valid():
+        # set token
+        data = serializer.data
+        user = User.objects.filter(username=data.get('email')).first()
+        token, created = Token.objects.get_or_create(user=user)
+        # send email token
+        context = {'user': user, 'subject':'PASSWORD RESET', 'message': ''}
+        # send_mail('password-reset', context)
+        send_html_email(
+            ['samuelitwaru@outlook.com'],
+            'emails/password-reset.html',
+            context
+            )
+
+        return Response({'detail': 'A link has been sent to your email. Click the link to reset your password'}, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

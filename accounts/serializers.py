@@ -39,6 +39,20 @@ class CustomAuthTokenSerializer(AuthTokenSerializer):
         attrs['user'] = user
         return attrs
 
+
 class PasswordChangeSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        errors = {}
+        if not User.objects.filter(username=data.get('email')).first():
+            errors['email'] = ["This email does not exist."]
+        if errors:
+            raise serializers.ValidationError(errors)
+        return data
