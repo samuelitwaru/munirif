@@ -8,7 +8,6 @@ class Proposal(models.Model):
     solution = models.TextField(null=True, blank=True)
     outputs = models.TextField(null=True, blank=True)
     team  = models.TextField(null=True, blank=True)
-    
     capacity_development = models.TextField(null=True, blank=True)
     scalability = models.TextField(null=True, blank=True)
     ethical_implications = models.TextField(null=True, blank=True)
