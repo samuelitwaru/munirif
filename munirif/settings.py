@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_filters',
     'accounts',
     'core',
     'corsheaders',
@@ -148,3 +149,7 @@ EMAIL_USE_TLS = True  # Use TLS for secure communication
 EMAIL_USE_SSL = False  # Do not use SSL
 EMAIL_USER = config('EMAIL_USER', default='')
 EMAIL_PASSWORD = config('EMAIL_PASSWORD', default='')
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
