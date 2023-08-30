@@ -4,29 +4,35 @@ from django.contrib.auth import update_session_auth_hash
 # Create your views here.
 # views.py
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
+from accounts.filters import UserFilter
 
 from accounts.utils import get_user_from_bearer_token
 from core.models import Profile
 from utils.mails import send_html_email
-from .serializers import PasswordChangeSerializer, PasswordResetSerializer, UserSerializer
+from .serializers import GroupSerializer, PasswordChangeSerializer, PasswordResetSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from .serializers import CustomAuthTokenSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework import viewsets
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view, permission_classes
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects
     serializer_class = UserSerializer
+    filter_backends = [UserFilter]
 
+class GroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
 
 class SignupView(APIView):
     permission_classes = (AllowAny,)

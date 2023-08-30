@@ -1,6 +1,11 @@
 from django.db import models
-# Create your models here.
+from django.conf import settings
 
+STATUS_CHOICES = [
+    ('EDITING', 'EDITING'),
+    ('SUBMITTED', 'SUBMITTED'),
+    ('SCORING', 'SCORING'),
+]
 
 class Proposal(models.Model):
     title = models.CharField(max_length=128)
@@ -15,6 +20,8 @@ class Proposal(models.Model):
     summary_budget = models.TextField(null=True, blank=True)
     detailed_budget = models.TextField(null=True, blank=True)
     workplan = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=64, default='EDITING', choices=STATUS_CHOICES) # editing, submitted, scoring
+
 
 class Score(models.Model):
     problem = models.IntegerField(null=True)
@@ -36,13 +43,15 @@ class Score(models.Model):
 
 
     user = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL)
+
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     
     
 class File(models.Model):
     name = models.CharField(max_length=64)
-    description = models.CharField(max_length=128)
+    description = models.CharField(max_length=128, null=True, blank=True)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
+    file = models.FileField(upload_to=settings.PROPOSAL_FILES_DIR, max_length=100)
 
 
 class Qualification(models.Model):

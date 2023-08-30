@@ -1,10 +1,26 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Department, Faculty, Proposal, Qualification, Profile
+from .models import Department, Faculty, Proposal, Qualification, Profile, File, Score
 
 
+
+
+class FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = File
+        fields = '__all__'
+
+class ScoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Score
+        fields = '__all__'
+    
+    def create(self, validated_data):
+        print(validated_data)
+        return super().create(validated_data)
 
 class ProposalSerializer(serializers.ModelSerializer):
+    files = FileSerializer(many=True, source='file_set')
     class Meta:
         model = Proposal
         fields = '__all__'
