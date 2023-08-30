@@ -152,8 +152,11 @@ EMAIL_HOST = config('EMAIL_HOST', default='')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = True  # Use TLS for secure communication
 EMAIL_USE_SSL = False  # Do not use SSL
-EMAIL_USER = config('EMAIL_USER', default='')
-EMAIL_PASSWORD = config('EMAIL_PASSWORD', default='')
+EMAIL_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+
+print('>>>>>>>>>>', EMAIL_PASSWORD, EMAIL_USER)
+print('>>>>>>>>>>', EMAIL_HOST, EMAIL_PORT)
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
