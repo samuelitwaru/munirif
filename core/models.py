@@ -1,5 +1,9 @@
 from django.db import models
 from django.conf import settings
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+import os
+
 
 STATUS_CHOICES = [
     ('EDITING', 'EDITING'),
@@ -107,3 +111,12 @@ class Profile(models.Model):
     gender = models.CharField(max_length=8)
     phone = models.IntegerField()
     
+
+
+@receiver(pre_delete, sender=File)
+def delete_file(sender, instance, **kwargs):
+    # Get the path to the file
+    file_path = instance.file.path
+    # Check if the file exists and delete it
+    if os.path.isfile(file_path):
+        os.remove(file_path)

@@ -127,7 +127,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.path.dirname(BASE_DIR)) / 'media/'
 
 
@@ -170,6 +170,8 @@ REST_FRAMEWORK = {
 
 PROPOSAL_FILES_DIR = MEDIA_ROOT / 'proposal_files'
 PROPOSAL_FILES_URL = MEDIA_URL + 'proposal_files'
+
+print(PROPOSAL_FILES_URL)
 
 if STAGING:
     CLIENT_ADDRESS = 'muni-rif.web.app'
