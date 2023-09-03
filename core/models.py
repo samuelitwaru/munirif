@@ -18,7 +18,7 @@ from django.core.files.storage import FileSystemStorage
 
 file_storage = FileSystemStorage(
     location=settings.PROPOSAL_FILES_DIR,
-    base_url='/media/'
+    base_url=settings.PROPOSAL_FILES_URL
 )
 
 class Section(models.Model):

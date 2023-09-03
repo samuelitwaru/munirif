@@ -169,6 +169,7 @@ REST_FRAMEWORK = {
 }
 
 PROPOSAL_FILES_DIR = MEDIA_ROOT / 'proposal_files'
+PROPOSAL_FILES_URL = MEDIA_URL + 'proposal_files'
 
 if STAGING:
     CLIENT_ADDRESS = 'muni-rif.web.app'
