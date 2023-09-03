@@ -13,6 +13,14 @@ SCORE_STATUS_CHOICES = [
     ('COMPLETED', 'COMPLETED'),
 ]
 
+
+from django.core.files.storage import FileSystemStorage
+
+file_storage = FileSystemStorage(
+    location=settings.PROPOSAL_FILES_DIR,
+    base_url='/media/'
+)
+
 class Section(models.Model):
      ref = models.CharField(max_length=16)
      name = models.CharField(max_length=32)
@@ -76,7 +84,7 @@ class File(models.Model):
     name = models.CharField(max_length=64)
     description = models.CharField(max_length=128, null=True, blank=True)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
-    file = models.FileField()
+    file = models.FileField(storage=file_storage)
 
 
 class Qualification(models.Model):
