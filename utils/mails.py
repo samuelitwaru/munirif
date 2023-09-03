@@ -2,7 +2,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
-def send_html_email(recipient_list, html_template, context):
+def send_html_email(subject, recipient_list, html_template, context):
     # Load the HTML template
     html_message = render_to_string(html_template, context)
 
@@ -11,9 +11,9 @@ def send_html_email(recipient_list, html_template, context):
 
     # Send the email
     send_mail(
-        context['subject'],
+        subject,
         plain_message,
-        'amobitinfo@gmail.com',  # Sender's email
+        'samuelitwaru@gmail.com',  # Sender's email
         recipient_list,
         html_message=html_message,  # HTML content of the email
         fail_silently=False,

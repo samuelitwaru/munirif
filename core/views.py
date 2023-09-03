@@ -1,10 +1,14 @@
 # views.py
 from rest_framework import viewsets, filters
-from .models import Faculty, Proposal, Qualification, File, Score
-from .serializers import FacultySerializer, FileSerializer, ProposalSerializer, QualificationSerializer, ScoreSerializer
+
+from utils.mails import send_html_email
+from .models import Faculty, Proposal, Qualification, File, Score, Section
+from .serializers import FacultySerializer, FileSerializer, ProposalSerializer, QualificationSerializer, ScoreSerializer, SectionSerializer
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User, Group
+from django.conf import settings
+
 
 class ProposalViewSet(viewsets.ModelViewSet):
     queryset = Proposal.objects.all()
@@ -12,31 +16,51 @@ class ProposalViewSet(viewsets.ModelViewSet):
     search_fields = ['title']
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
 
-    # @action(detail=True, methods=['POST'], name='submit', url_path='submit')
-    # def sumit(self, request, *args, **kwargs):
-    #     data = request.data
-    #     setup_levels(data)
-    #     level_groups = super().get_queryset()
-    #     serializer = self.get_serializer(level_groups, many=True)
-    #     return Response(serializer.data)
 
+class SectionViewSet(viewsets.ModelViewSet):
+    queryset = Section.objects.all()
+    serializer_class = SectionSerializer
 
 class FileViewSet(viewsets.ModelViewSet):
     queryset = File.objects.all()
     serializer_class = FileSerializer
 
+    def get_queryset(self):
+        params = self.request.query_params
+        queryset = super().get_queryset()
+        if params:
+            queryset = queryset.filter(**params.dict())
+        return queryset
+
 class ScoreViewSet(viewsets.ModelViewSet):
     queryset = Score.objects.all()
     serializer_class = ScoreSerializer
 
+    def get_queryset(self):
+        params = self.request.query_params
+        queryset = super().get_queryset()
+        if params:
+            queryset = queryset.filter(**params.dict())
+        return queryset
+
     def create(self, request, *args, **kwargs):
         user = request.data['user']
         email = request.data['email']
+        proposal = request.data['proposal']
+        print(request.data)
         if email and not user :
-            user, created = User.objects.get_or_create(username=email, email=email, is_active=False)
+            user, created = User.objects.get_or_create(username=email)
             user.groups.add(Group.objects.get(name='reviewer'))
-            # send reviewership email
             request.data['user'] = user.id
+        # send reviewership email
+        proposal = Proposal.objects.get(id=proposal)
+        context = {'proposal': proposal, 'client_address': settings.CLIENT_ADDRESS}
+        send_html_email(
+            'PROPOSAL REVIEW INVITATION',
+            [email],
+            'emails/review-invitation.html',
+            context
+        )
         return super().create(request, *args, **kwargs)
 
 class FacultyViewSet(viewsets.ModelViewSet):

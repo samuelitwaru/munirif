@@ -1,7 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Department, Faculty, Proposal, Qualification, Profile, File, Score
-
+from .models import Department, Faculty, Proposal, Qualification, Profile, File, Score, Section
 
 
 
@@ -11,6 +10,9 @@ class FileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ScoreSerializer(serializers.ModelSerializer):
+    user__first_name = serializers.CharField(source='user.first_name', read_only=True)
+    user__last_name = serializers.CharField(source='user.last_name', read_only=True)
+    user__username = serializers.CharField(source='user.username', read_only=True)
     class Meta:
         model = Score
         fields = '__all__'
@@ -19,8 +21,15 @@ class ScoreSerializer(serializers.ModelSerializer):
         print(validated_data)
         return super().create(validated_data)
 
+
+class SectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Section
+        fields = '__all__'
+
+
 class ProposalSerializer(serializers.ModelSerializer):
-    files = FileSerializer(many=True, source='file_set')
+    files = FileSerializer(many=True, source='file_set', read_only=True)
     class Meta:
         model = Proposal
         fields = '__all__'

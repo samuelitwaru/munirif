@@ -51,6 +51,12 @@ class PasswordChangeSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True)
 
 
+class SetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField(required= True)
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+
 class PasswordResetSerializer(serializers.Serializer):
     email = serializers.CharField(required=True)
 

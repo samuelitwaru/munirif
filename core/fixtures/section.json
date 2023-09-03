@@ -1,0 +1,112 @@
+[
+    {
+      "model": "core.section",
+      "pk": 1,
+      "fields": {
+        "ref": "#problem",
+        "name": "problem",
+        "title": "Problem"
+      }
+    },
+
+    {
+        "model": "core.section",
+        "pk": 2,
+        "fields": {
+          "ref": "#solution",
+          "name": "solution",
+          "title": "Solution"
+        }
+    },
+
+    {
+        "model": "core.section",
+        "pk": 3,
+        "fields": {
+          "ref": "#outputs",
+          "name": "outputs",
+          "title": "Outputs, Outcomes and Impact"
+        }
+    },
+
+    {
+        "model": "core.section",
+        "pk": 4,
+        "fields": {
+          "ref": "#team",
+          "name": "team",
+          "title": "Team Composition"
+        }
+    },
+
+    {
+        "model": "core.section",
+        "pk": 5,
+        "fields": {
+          "ref": "#capacity_development",
+          "name": "capacity_development",
+          "title": "Provision for Capacity Development"
+        }
+    },
+
+    {
+        "model": "core.section",
+        "pk": 6,
+        "fields": {
+          "ref": "#scalability",
+          "name": "scalability",
+          "title": "Dissemination, Scalabilty and Sustainability"
+        }
+    },
+
+    {
+        "model": "core.section",
+        "pk": 7,
+        "fields": {
+          "ref": "#ethical_implications",
+          "name": "ethical_implications",
+          "title": "Ethical Implications and Enviromental Impact"
+        }
+    },
+
+    {
+        "model": "core.section",
+        "pk": 8,
+        "fields": {
+          "ref": "#conflict_of_interest",
+          "name": "conflict_of_interest",
+          "title": "Conflict of Interest"
+        }
+    },
+
+    {
+        "model": "core.section",
+        "pk": 9,
+        "fields": {
+          "ref": "#summary_budget",
+          "name": "summary_budget",
+          "title": "Summary Budget"
+        }
+    },
+
+    {
+        "model": "core.section",
+        "pk": 10,
+        "fields": {
+          "ref": "#detailed_budget",
+          "name": "detailed_budget",
+          "title": "Detailed Budget"
+        }
+    },
+
+    {
+        "model": "core.section",
+        "pk": 11,
+        "fields": {
+          "ref": "#workplan",
+          "name": "workplan",
+          "title": "Workplan"
+        }
+    }
+
+  ]

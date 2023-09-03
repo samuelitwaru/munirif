@@ -26,6 +26,7 @@ SECRET_KEY = 'django-insecure-)hfk+ha#s%whs^o6)7u7!b9p8mdj4_@q8m%3!kk2f*i2h=v@1&
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+STAGING = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -141,25 +142,33 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
+if STAGING:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-EMAIL_HOST = config('EMAIL_HOST', default='')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = True  # Use TLS for secure communication
-EMAIL_USE_SSL = False  # Do not use SSL
-EMAIL_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+# EMAIL_HOST = config('EMAIL_HOST', default='')
+# EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+# EMAIL_USE_TLS = True  # Use TLS for secure communication
+# # EMAIL_USE_SSL = True  # Do not use SSL
+# EMAIL_USER = config('EMAIL_HOST_USER', default='')
+# EMAIL_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
-print('>>>>>>>>>>', EMAIL_PASSWORD, EMAIL_USER)
-print('>>>>>>>>>>', EMAIL_HOST, EMAIL_PORT)
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'samuelitwaru@gmail.com'
+EMAIL_HOST_PASSWORD = 'aihxmdsfyqxeocua'
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
 PROPOSAL_FILES_DIR = MEDIA_ROOT / 'proposal_files'
+
+if STAGING:
+    CLIENT_ADDRESS = 'muni-rif.web.app'
+else:
+    CLIENT_ADDRESS = '127.0.0.1:9000'

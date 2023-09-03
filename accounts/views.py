@@ -15,7 +15,7 @@ from accounts.filters import UserFilter
 from accounts.utils import get_user_from_bearer_token
 from core.models import Profile
 from utils.mails import send_html_email
-from .serializers import GroupSerializer, PasswordChangeSerializer, PasswordResetSerializer, UserSerializer
+from .serializers import GroupSerializer, PasswordChangeSerializer, PasswordResetSerializer, SetPasswordSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from .serializers import CustomAuthTokenSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -23,6 +23,7 @@ from rest_framework import viewsets
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view, permission_classes
 from django_filters.rest_framework import DjangoFilterBackend
+from django.conf import settings
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -151,14 +152,32 @@ def reset_password(request):
         user = User.objects.filter(username=data.get('email')).first()
         token, created = Token.objects.get_or_create(user=user)
         # send email token
-        context = {'user': user, 'subject':'PASSWORD RESET', 'message': ''}
-        # send_mail('password-reset', context)
+        context = {
+            'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS}
+        print(context)
         send_html_email(
-            ['samuelitwaru@outlook.com'],
+            'PASSWORD RESET',
+            [user.email],
             'emails/password-reset.html',
             context
             )
 
         return Response({'detail': 'A link has been sent to your email. Click the link to reset your password'}, status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+def set_password(request):
+    serializer = SetPasswordSerializer(data=request.data)
+    if serializer.is_valid():
+        # set token
+        data = serializer.data
+        token = Token.objects.get(key=data['token'])
+        if token:
+            user = token.user
+            user.set_password(data['new_password'])
+            user.save()
+            return Response({'detail': 'Your password has been updated'}, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

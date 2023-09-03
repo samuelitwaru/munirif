@@ -7,6 +7,17 @@ STATUS_CHOICES = [
     ('SCORING', 'SCORING'),
 ]
 
+SCORE_STATUS_CHOICES = [
+    ('PENDING', 'PENDING'),
+    ('ACCEPTED', 'ACCEPTED'),
+    ('COMPLETED', 'COMPLETED'),
+]
+
+class Section(models.Model):
+     ref = models.CharField(max_length=16)
+     name = models.CharField(max_length=32)
+     title = models.CharField(max_length=32)
+
 class Proposal(models.Model):
     title = models.CharField(max_length=128)
     problem = models.TextField(null=True, blank=True)
@@ -37,15 +48,29 @@ class Score(models.Model):
     detailed_budget = models.IntegerField(null=True)
     workplan = models.IntegerField(null=True)
 
-    strengths = models.TextField(null=True)
-    weaknesses = models.TextField(null=True)
+    problem_comment = models.TextField(null=True, blank=True)
+    solution_comment = models.TextField(null=True, blank=True)
+    outputs_comment = models.TextField(null=True, blank=True)
+    team_comment  = models.TextField(null=True, blank=True)
+    
+    capacity_development_comment = models.TextField(null=True, blank=True)
+    scalability_comment = models.TextField(null=True, blank=True)
+    ethical_implications_comment = models.TextField(null=True, blank=True)
+    conflict_of_interest_comment = models.TextField(null=True, blank=True)
+    summary_budget_comment = models.TextField(null=True, blank=True)
+    detailed_budget_comment = models.TextField(null=True, blank=True)
+    workplan_comment = models.TextField(null=True, blank=True)
+
+    strengths = models.TextField(null=True, blank=True)
+    weaknesses = models.TextField(null=True, blank=True)
     comment = models.TextField(null=True)
 
-
+    status = models.CharField(max_length=64, default='PENDING', choices=SCORE_STATUS_CHOICES) # PENDING, ACCEPTED, COMPLETED
     user = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL)
-
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     
+    class Meta:
+        unique_together = ('user', 'proposal')
     
 class File(models.Model):
     name = models.CharField(max_length=64)
