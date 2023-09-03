@@ -76,7 +76,7 @@ class File(models.Model):
     name = models.CharField(max_length=64)
     description = models.CharField(max_length=128, null=True, blank=True)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
-    file = models.FileField(upload_to=settings.PROPOSAL_FILES_DIR, max_length=100)
+    file = models.FileField()
 
 
 class Qualification(models.Model):
