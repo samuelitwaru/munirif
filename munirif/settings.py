@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-)hfk+ha#s%whs^o6)7u7!b9p8mdj4_@q8m%3!kk2f*i2h=v@1&
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-STAGING = True
+STAGING = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -73,6 +73,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries': {
+                "app_tags": "templatetags.app_tags"
+            }
         },
     },
 ]
@@ -125,8 +128,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.path.dirname(BASE_DIR)) / 'media/'
 
@@ -143,11 +148,12 @@ CORS_ALLOWED_ORIGINS = [
     'https://muni-rif.web.app',
 ]
 
-# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 if STAGING:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 
 # EMAIL_HOST = config('EMAIL_HOST', default='')
@@ -161,8 +167,8 @@ else:
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'samuelitwaru@gmail.com'
-EMAIL_HOST_PASSWORD = 'aihxmdsfyqxeocua'
+EMAIL_HOST_USER = 'samit.notification@gmail.com'
+EMAIL_HOST_PASSWORD = 'disnhnwrjriwltrm'
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']

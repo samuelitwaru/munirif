@@ -1,0 +1,22 @@
+{% comment %}
+<div class="form-group p-2">
+  <label
+    >{{field.label}} {% if field.field.required %}<span class="text-danger"
+      >*</span
+    >{% endif %}</label
+  >
+  {{as_widget}}
+  <small class="text-danger">{{field.errors}}</small>
+</div>
+{% endcomment %}
+<div class="py-1">
+  <div class="form-outline">
+    {{as_widget}}
+    <label class="form-label" for="form2Example1"
+      >{{field.label}} {% if field.field.required %}<span class="text-danger"
+        >*</span
+      >{% endif %}</label
+    >
+  </div>
+  <small class="text-danger">{{field.errors}}</small>
+</div>

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% load app_tags %}
+{% block body %}
+<div class="container" style='max-width: 500px;'>
+    {% if token %}
+    <div>
+        <hr />
+        <h3>Complete Signup</h3>
+        <hr />
+        
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col">
+                    {% render_field complete_signup_form.first_name class='form-control' %}
+                </div>
+                <div class="col">
+                    {% render_field complete_signup_form.last_name class='form-control' %}
+                </div>
+            </div>
+    
+            <div class="row">
+                <div class="col">
+                    {% render_field complete_signup_form.password class='form-control' %}
+                </div>
+                <div class="col">
+                    {% render_field complete_signup_form.confirm_password class='form-control' %}
+                </div>
+            </div>
+    
+            <hr />
+            <div align="right">
+                <input type="submit" />
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

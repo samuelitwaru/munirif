@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blank</title>
+</head>
+<body>
+    <!-- Add a button or a link that triggers the JavaScript to open a new window -->
+    <button onclick="openNewWindow()">Open New Window</button>
+
+    <script>
+        function openNewWindow() {
+            // Specify the URL you want to open in the new window/tab
+            var newWindowUrl = '{{new_window_url}}';
+
+            // Open a new window or tab with the specified URL
+            window.open(newWindowUrl, '_blank');
+        }
+        openNewWindow()
+    </script>
+</body>
+</html>
+
+

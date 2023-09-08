@@ -1,0 +1,11 @@
+<div class="form-group p-2">
+	<label>{{field.label}} {% if field.field.required %}<span class="text-danger">*</span>{% endif %}</label>
+	<div class="form-control" style="height: auto">
+		{% for radio in field %}
+			<div>
+				{{ radio }}
+			</div>
+		{% endfor %}
+		<small class="text-danger">{{field.errors}}</small>
+	</div>
+</div>

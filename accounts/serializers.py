@@ -4,7 +4,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 
-from core.serializers import ProfileSerializer
+from core.serializers import DepartmentSerializer, FacultySerializer, ProfileSerializer, QualificationSerializer
 
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(required=False)
@@ -67,4 +67,27 @@ class PasswordResetSerializer(serializers.Serializer):
             errors['email'] = ["This email does not exist."]
         if errors:
             raise serializers.ValidationError(errors)
+        return data
+    
+class CompleteSignupSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    phone = serializers.IntegerField()
+    gender = serializers.CharField()
+    faculty = serializers.IntegerField()
+    department = serializers.IntegerField()
+    qualification = serializers.IntegerField()
+    password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+  
+
+    def validate(self, data):
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+
+        if password != confirm_password:
+            raise serializers.ValidationError("Passwords do not match.")
+
         return data

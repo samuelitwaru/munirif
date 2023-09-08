@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth import update_session_auth_hash
-
+from django.contrib import messages
 # Create your views here.
 # views.py
 from django.contrib.auth import authenticate, login, logout
@@ -11,11 +11,12 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from accounts.filters import UserFilter
+from accounts.forms import CompleteSignupForm
 
 from accounts.utils import get_user_from_bearer_token
 from core.models import Profile
 from utils.mails import send_html_email
-from .serializers import GroupSerializer, PasswordChangeSerializer, PasswordResetSerializer, SetPasswordSerializer, UserSerializer
+from .serializers import CompleteSignupSerializer, GroupSerializer, PasswordChangeSerializer, PasswordResetSerializer, SetPasswordSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from .serializers import CustomAuthTokenSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -53,6 +54,35 @@ class SignupView(APIView):
             profile.save()
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CompleteSignupView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = CompleteSignupSerializer(data=request.data)
+        if serializer.is_valid():
+            token = Token.objects.get(key=request.data['token'])
+            user = token.user
+            user.first_name = request.data['first_name']
+            user.first_name = request.data['last_name']
+            user.email = user.username
+            user.is_active = True
+            user.set_password(request.data['password'])
+            # user.save()
+            profile = Profile(
+                user=user,
+                faculty_id=request.data['faculty'],
+                department_id=request.data['department'],
+                qualification_id=request.data['qualification'],
+                phone=request.data['phone'],
+                gender=request.data['gender'],
+                )
+            # profile.save()
+            login(request, user)
+            token, _ = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key, 'user': UserSerializer(user).data})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -153,11 +183,12 @@ def reset_password(request):
         token, created = Token.objects.get_or_create(user=user)
         # send email token
         context = {
-            'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS}
-        print(context)
+            'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS
+            }
         send_html_email(
+            request,
             'PASSWORD RESET',
-            [user.email],
+            [user.username],
             'emails/password-reset.html',
             context
             )
@@ -181,3 +212,61 @@ def set_password(request):
             return Response({'detail': 'Your password has been updated'}, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def complete_signup(request):
+    token = Token.objects.filter(key=token).first()
+    _next = request.GET.get("next")
+    complete_signup_form = CompleteSignupSerializer()
+
+    if token:
+        user = token.user
+        if request.method == 'POST':
+            complete_signup_form = CompleteSignupForm(request.POST)
+            if complete_signup_form.is_valid():
+                data = complete_signup_form.cleaned_data
+                user.first_name = data['first_name']
+                user.last_name = data['last_name']
+                user.set_password(data['password'])
+                user.save()
+                
+                context = {
+                    'new_window_url': _next
+                }
+                return render(request, 'blank.html', context)
+    else:
+        messages.error(request, 'Invalid Request', extra_tags='danger')
+    context = {
+        'complete_signup_form': complete_signup_form,
+        'token': token
+    }
+    return render(request, 'account/complete-signup.html', context)
+
+def complete_signup2(request):
+    token = request.GET.get("token")
+    token = Token.objects.filter(key=token).first()
+    _next = request.GET.get("next")
+    complete_signup_form = CompleteSignupForm()
+
+    if token:
+        user = token.user
+        if request.method == 'POST':
+            complete_signup_form = CompleteSignupForm(request.POST)
+            if complete_signup_form.is_valid():
+                data = complete_signup_form.cleaned_data
+                user.first_name = data['first_name']
+                user.last_name = data['last_name']
+                user.set_password(data['password'])
+                user.save()
+                
+                context = {
+                    'new_window_url': _next
+                }
+                return render(request, 'blank.html', context)
+    else:
+        messages.error(request, 'Invalid Request', extra_tags='danger')
+    context = {
+        'complete_signup_form': complete_signup_form,
+        'token': token
+    }
+    return render(request, 'account/complete-signup.html', context)
