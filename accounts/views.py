@@ -71,7 +71,8 @@ class CompleteSignupView(APIView):
             user.email = user.username
             user.is_active = True
             user.set_password(request.data['password'])
-            # user.save()
+            user.save()
+            user.groups.add(Group.objects.get(name='reviewer'))
             profile = Profile(
                 user=user,
                 faculty_id=request.data['faculty'],
@@ -80,7 +81,8 @@ class CompleteSignupView(APIView):
                 phone=request.data['phone'],
                 gender=request.data['gender'],
                 )
-            # profile.save()
+
+            profile.save()
             login(request, user)
             token, _ = Token.objects.get_or_create(user=user)
             return Response({'token': token.key, 'user': UserSerializer(user).data})
@@ -236,6 +238,8 @@ def complete_signup(request):
                 user.last_name = data['last_name']
                 user.set_password(data['password'])
                 user.save()
+
+                user.groups.add(Group.objects.get(name='reviewer'))
                 
                 context = {
                     'new_window_url': _next
@@ -265,6 +269,8 @@ def complete_signup2(request):
                 user.last_name = data['last_name']
                 user.set_password(data['password'])
                 user.save()
+
+                user.groups.add(Group.objects.get(name='reviewer'))
                 
                 context = {
                     'new_window_url': _next
