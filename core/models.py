@@ -1,14 +1,17 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.conf import settings
-from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 import os
+from django.db.models.signals import pre_save, post_save, post_delete, pre_delete
+from django.dispatch import receiver
 
 
 STATUS_CHOICES = [
     ('EDITING', 'EDITING'),
     ('SUBMITTED', 'SUBMITTED'),
     ('SCORING', 'SCORING'),
+    ('REVIEWED', 'REVIEWED'),
 ]
 
 SCORE_STATUS_CHOICES = [
@@ -43,7 +46,8 @@ class Proposal(models.Model):
     summary_budget = models.TextField(null=True, blank=True)
     detailed_budget = models.TextField(null=True, blank=True)
     workplan = models.TextField(null=True, blank=True)
-    status = models.CharField(max_length=64, default='EDITING', choices=STATUS_CHOICES) # editing, submitted, scoring
+    status = models.CharField(max_length=64, default='EDITING', choices=STATUS_CHOICES) # editing, submitted, scoring, reviewed
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class Score(models.Model):
@@ -111,6 +115,17 @@ class Profile(models.Model):
     gender = models.CharField(max_length=8)
     phone = models.IntegerField()
     
+
+@receiver(post_save, sender=Score)
+@receiver(post_delete, sender=Score)
+def on_score_status_change(sender, instance, **kwargs):
+    proposal = instance.proposal
+    scores = proposal.score_set.all()
+    if all(list(map(lambda x: x.status=='COMPLETED', scores))):
+        proposal.status = 'REVIEWED'
+    else:
+        proposal.status = 'SCORING'
+    proposal.save()
 
 
 @receiver(pre_delete, sender=File)

@@ -43,6 +43,7 @@ class SignupView(APIView):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            user.groups.add(Group.objects.get(name='applicant'))
             profile = Profile(
                 user=user,
                 faculty_id=request.data['faculty'],
@@ -66,7 +67,7 @@ class CompleteSignupView(APIView):
             token = Token.objects.get(key=request.data['token'])
             user = token.user
             user.first_name = request.data['first_name']
-            user.first_name = request.data['last_name']
+            user.last_name = request.data['last_name']
             user.email = user.username
             user.is_active = True
             user.set_password(request.data['password'])
@@ -118,10 +119,14 @@ class LoginView(APIView):
         password = request.data.get('password')
         user = authenticate(username=username, password=password)
 
+        print(username, password)
+
         if user:
             login(request, user)
+            user_data = UserSerializer(user).data
+            user_data['groups'] = [group.name for group in user.groups.all()]
             token, _ = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key, 'user': UserSerializer(user).data})
+            return Response({'token': token.key, 'user': user_data})
         else:
             return Response({'error': ['Invalid credentials']}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -207,6 +212,8 @@ def set_password(request):
         token = Token.objects.get(key=data['token'])
         if token:
             user = token.user
+            print(user)
+            print(data['new_password'])
             user.set_password(data['new_password'])
             user.save()
             return Response({'detail': 'Your password has been updated'}, status=status.HTTP_200_OK)

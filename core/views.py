@@ -17,6 +17,15 @@ class ProposalViewSet(viewsets.ModelViewSet):
     search_fields = ['title']
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        params = self.request.query_params.dict()
+        if 'search' in params:
+            params.pop('search')
+        if params:
+            queryset = queryset.filter(**params)
+        return queryset
+
 
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.all()

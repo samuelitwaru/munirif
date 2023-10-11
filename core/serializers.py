@@ -9,16 +9,6 @@ class FileSerializer(serializers.ModelSerializer):
         model = File
         fields = '__all__'
 
-class ScoreSerializer(serializers.ModelSerializer):
-    user__first_name = serializers.CharField(source='user.first_name', read_only=True)
-    user__last_name = serializers.CharField(source='user.last_name', read_only=True)
-    user__username = serializers.CharField(source='user.username', read_only=True)
-    class Meta:
-        model = Score
-        fields = '__all__'
-    
-    def create(self, validated_data):
-        return super().create(validated_data)
 
 
 class SectionSerializer(serializers.ModelSerializer):
@@ -32,6 +22,20 @@ class ProposalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proposal
         fields = '__all__'
+
+
+class ScoreSerializer(serializers.ModelSerializer):
+    user__first_name = serializers.CharField(source='user.first_name', read_only=True)
+    user__last_name = serializers.CharField(source='user.last_name', read_only=True)
+    user__username = serializers.CharField(source='user.username', read_only=True)
+    proposal_detail = ProposalSerializer(source='proposal', read_only=True)
+    class Meta:
+        model = Score
+        fields = '__all__'
+    
+    def create(self, validated_data):
+        return super().create(validated_data)
+
 
 class QualificationSerializer(serializers.ModelSerializer):
     class Meta:
