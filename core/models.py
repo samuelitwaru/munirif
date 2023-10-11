@@ -98,6 +98,9 @@ class File(models.Model):
 class Qualification(models.Model):
     name = models.CharField(max_length=64)
 
+    def __str__(self):
+        return self.name
+
 class Faculty(models.Model):
     name = models.CharField(max_length=64)
 
@@ -106,6 +109,8 @@ class Department(models.Model):
     name = models.CharField(max_length=64)
     faculty = models.ForeignKey(Faculty, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.name
 
 class Profile(models.Model):
     user = models.OneToOneField("auth.User", on_delete=models.CASCADE, related_name='profile')
