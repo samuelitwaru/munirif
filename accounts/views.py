@@ -59,33 +59,6 @@ class SignupView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UpdateUserView(APIView):
-    permission_classes = (AllowAny,)
-
-    def post(self, request):
-        serializer = UpdateUserSerializer(data=request.data)
-        if serializer.is_valid():
-            token = Token.objects.get(key=request.data['token'])
-            user = token.user
-            data = request.data
-            user.first_name = data['first_name']
-            user.last_name = data['last_name']
-            user.email = data['username']
-            user.username = data['username']
-            user.save()
-
-            profile = user.profile
-            if profile:
-                profile.faculty_id = data['faculty']
-                profile.department = data['department']
-                profile.qualification = data['qualification']
-                profile.phone = data['phone']
-                profile.save()
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class CompleteSignupView(APIView):
     permission_classes = (AllowAny,)
 
@@ -108,6 +81,7 @@ class CompleteSignupView(APIView):
                 qualification_id=request.data['qualification'],
                 phone=request.data['phone'],
                 gender=request.data['gender'],
+                designation=request.data['designation'],
                 )
 
             profile.save()
@@ -121,28 +95,28 @@ class CompleteSignupView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AuthLoginView(ObtainAuthToken):
+# class AuthLoginView(ObtainAuthToken):
 
-    permission_classes = (AllowAny,)
-    serializer_class = CustomAuthTokenSerializer
+#     permission_classes = (AllowAny,)
+#     serializer_class = CustomAuthTokenSerializer
 
-    def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data,
-                                           context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        groups = [group.name for group in user.groups.all()]
-        token, created = Token.objects.get_or_create(user=user)
-        res = {
-            'token': token.key,
-            'user': {
-                'user_id': user.pk,
-                'name': f'{user.first_name} {user.last_name}',
-                'email': user.email,
-                'groups': groups
-            }
-        }
-        return Response(res)
+#     def post(self, request, *args, **kwargs):
+#         serializer = self.serializer_class(data=request.data,
+#                                            context={'request': request})
+#         serializer.is_valid(raise_exception=True)
+#         user = serializer.validated_data['user']
+#         groups = [group.name for group in user.groups.all()]
+#         token, created = Token.objects.get_or_create(user=user)
+#         res = {
+#             'token': token.key,
+#             'user': {
+#                 'user_id': user.pk,
+#                 'name': f'{user.first_name} {user.last_name}',
+#                 'email': user.email,
+#                 'groups': groups
+#             }
+#         }
+#         return Response(res)
 
 
 class LoginView(APIView):
@@ -311,33 +285,33 @@ def complete_signup(request):
     }
     return render(request, 'account/complete-signup.html', context)
 
-def complete_signup2(request):
-    token = request.GET.get("token")
-    token = Token.objects.filter(key=token).first()
-    _next = request.GET.get("next")
-    complete_signup_form = CompleteSignupForm()
+# def complete_signup2(request):
+#     token = request.GET.get("token")
+#     token = Token.objects.filter(key=token).first()
+#     _next = request.GET.get("next")
+#     complete_signup_form = CompleteSignupForm()
 
-    if token:
-        user = token.user
-        if request.method == 'POST':
-            complete_signup_form = CompleteSignupForm(request.POST)
-            if complete_signup_form.is_valid():
-                data = complete_signup_form.cleaned_data
-                user.first_name = data['first_name']
-                user.last_name = data['last_name']
-                user.set_password(data['password'])
-                user.save()
+#     if token:
+#         user = token.user
+#         if request.method == 'POST':
+#             complete_signup_form = CompleteSignupForm(request.POST)
+#             if complete_signup_form.is_valid():
+#                 data = complete_signup_form.cleaned_data
+#                 user.first_name = data['first_name']
+#                 user.last_name = data['last_name']
+#                 user.set_password(data['password'])
+#                 user.save()
 
-                user.groups.add(Group.objects.get(name='reviewer'))
+#                 user.groups.add(Group.objects.get(name='reviewer'))
                 
-                context = {
-                    'new_window_url': _next
-                }
-                return render(request, 'blank.html', context)
-    else:
-        messages.error(request, 'Invalid Request', extra_tags='danger')
-    context = {
-        'complete_signup_form': complete_signup_form,
-        'token': token
-    }
-    return render(request, 'account/complete-signup.html', context)
+#                 context = {
+#                     'new_window_url': _next
+#                 }
+#                 return render(request, 'blank.html', context)
+#     else:
+#         messages.error(request, 'Invalid Request', extra_tags='danger')
+#     context = {
+#         'complete_signup_form': complete_signup_form,
+#         'token': token
+#     }
+#     return render(request, 'account/complete-signup.html', context)
