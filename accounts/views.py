@@ -112,8 +112,12 @@ class CompleteSignupView(APIView):
 
             profile.save()
             login(request, user)
+
+            user_data = UserSerializer(user).data
+            user_data['groups'] = [group.name for group in user.groups.all()]
             token, _ = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key, 'user': UserSerializer(user).data})
+            return Response({'token': token.key, 'user': user_data})
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
