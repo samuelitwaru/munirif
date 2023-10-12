@@ -121,7 +121,8 @@ class Profile(models.Model):
     department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL)
     qualification = models.ForeignKey(Qualification, null=True, on_delete=models.SET_NULL)
     gender = models.CharField(max_length=8)
-    phone = models.IntegerField()
+    phone = models.CharField(max_length=10)
+    designation = models.CharField(max_length=32)
     
     def __str__(self):
         return f'{self.user.first_name} {self.user.last_name}'

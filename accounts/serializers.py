@@ -81,14 +81,22 @@ class CompleteSignupSerializer(serializers.Serializer):
     qualification = serializers.IntegerField()
     password = serializers.CharField(required=True)
     confirm_password = serializers.CharField(required=True)
-
   
 
     def validate(self, data):
         password = data.get('password')
         confirm_password = data.get('confirm_password')
-
         if password != confirm_password:
             raise serializers.ValidationError("Passwords do not match.")
-
         return data
+    
+    
+class UpdateUserSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    phone = serializers.IntegerField()
+    faculty = serializers.IntegerField()
+    department = serializers.IntegerField()
+    qualification = serializers.IntegerField()
+    

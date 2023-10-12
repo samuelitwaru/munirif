@@ -16,7 +16,7 @@ from accounts.forms import CompleteSignupForm
 from accounts.utils import get_user_from_bearer_token
 from core.models import Profile
 from utils.mails import send_html_email
-from .serializers import CompleteSignupSerializer, GroupSerializer, PasswordChangeSerializer, PasswordResetSerializer, SetPasswordSerializer, UserSerializer
+from .serializers import CompleteSignupSerializer, GroupSerializer, PasswordChangeSerializer, PasswordResetSerializer, SetPasswordSerializer, UpdateUserSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from .serializers import CustomAuthTokenSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -51,8 +51,36 @@ class SignupView(APIView):
                 qualification_id=request.data['qualification'],
                 phone=request.data['phone'],
                 gender=request.data['gender'],
+                designation=request.data['designation'],
                 )
             profile.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateUserView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = UpdateUserSerializer(data=request.data)
+        if serializer.is_valid():
+            token = Token.objects.get(key=request.data['token'])
+            user = token.user
+            data = request.data
+            user.first_name = data['first_name']
+            user.last_name = data['last_name']
+            user.email = data['username']
+            user.username = data['username']
+            user.save()
+
+            profile = user.profile
+            if profile:
+                profile.faculty_id = data['faculty']
+                profile.department = data['department']
+                profile.qualification = data['qualification']
+                profile.phone = data['phone']
+                profile.save()
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -121,8 +149,6 @@ class LoginView(APIView):
         password = request.data.get('password')
         user = authenticate(username=username, password=password)
 
-        print(username, password)
-
         if user:
             login(request, user)
             user_data = UserSerializer(user).data
@@ -176,6 +202,34 @@ def change_password(request):
 
         return Response({'detail': 'Password successfully changed.'}, status=status.HTTP_200_OK)
 
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+def update_user(request):
+    serializer = UpdateUserSerializer(data=request.data)
+    if serializer.is_valid():
+        token = Token.objects.get(key=request.data['token'])
+        user = token.user
+        data = request.data
+        user.first_name = data['first_name']
+        user.last_name = data['last_name']
+        user.email = data['username']
+        user.username = data['username']
+        user.save()
+
+        profile = user.profile
+        if profile:
+            profile.faculty_id = data['faculty']
+            profile.department_id = data['department']
+            profile.qualification_id = data['qualification']
+            profile.phone = data['phone']
+            profile.save()
+        
+        user_data = UserSerializer(user).data
+        user_data['groups'] = [group.name for group in user.groups.all()]
+        return Response({'token': token.key, 'user': user_data})
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
