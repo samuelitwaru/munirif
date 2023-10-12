@@ -32,6 +32,7 @@ class Section(models.Model):
      ref = models.CharField(max_length=16)
      name = models.CharField(max_length=32)
      title = models.CharField(max_length=32)
+     word_limit = models.IntegerField()
 
 class Proposal(models.Model):
     title = models.CharField(max_length=128)
