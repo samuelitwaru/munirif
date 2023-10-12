@@ -64,7 +64,7 @@ class ScoreViewSet(viewsets.ModelViewSet):
         token, _ = Token.objects.get_or_create(user=user)
         context = {'proposal': proposal, 'token':token, 'client_address': settings.CLIENT_ADDRESS}
         template = 'emails/review-invitation.html'
-        if not user.is_active: template = 'emails/new-user-review-invitation.html'
+        if not user.is_active or not user.profile: template = 'emails/new-user-review-invitation.html'
         # if not user.is_active: template = 'emails/another.html'
         print('>>>>>>>>>>', template)
         if created:
