@@ -49,6 +49,7 @@ class Proposal(models.Model):
     workplan = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=64, default='EDITING', choices=STATUS_CHOICES) # editing, submitted, scoring, reviewed
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    team = models.ManyToManyField(User, related_name='team_proposals')
 
 
 class Score(models.Model):
@@ -138,6 +139,12 @@ def on_score_status_change(sender, instance, **kwargs):
     else:
         proposal.status = 'SCORING'
     proposal.save()
+
+
+@receiver(post_save, sender=User)
+def create_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
 
 
 @receiver(pre_delete, sender=File)

@@ -45,17 +45,14 @@ class SignupView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             user.groups.add(Group.objects.get(name='applicant'))
-            profile = Profile(
-                user=user,
-                faculty_id=request.data['faculty'],
-                department_id=request.data['department'],
-                qualification_id=request.data['qualification'],
-                phone=request.data['phone'],
-                gender=request.data['gender'],
-                designation=request.data['designation'],
-                )
-            profile.save()
-
+            profile = user.profile
+            profile.user=user
+            profile.faculty_id=request.data['faculty']
+            profile.department_id=request.data['department']
+            profile.qualification_id=request.data['qualification']
+            profile.phone=request.data['phone']
+            profile.gender=request.data['gender']
+            profile.designation=request.data['designation']
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -75,17 +72,14 @@ class CompleteSignupView(APIView):
             user.set_password(request.data['password'])
             user.save()
             user.groups.add(Group.objects.get(name='reviewer'))
-            profile = Profile(
-                user=user,
-                faculty_id=request.data['faculty'],
-                department_id=request.data['department'],
-                qualification_id=request.data['qualification'],
-                phone=request.data['phone'],
-                gender=request.data['gender'],
-                designation=request.data['designation'],
-                )
+            profile = user.profile
+            profile.faculty_id=request.data['faculty']
+            profile.department_id=request.data['department']
+            profile.qualification_id=request.data['qualification']
+            profile.phone=request.data['phone']
+            profile.gender=request.data['gender']
+            profile.designation=request.data['designation']
 
-            profile.save()
             login(request, user)
 
             user_data = UserSerializer(user).data
@@ -94,30 +88,6 @@ class CompleteSignupView(APIView):
             return Response({'token': token.key, 'user': user_data})
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# class AuthLoginView(ObtainAuthToken):
-
-#     permission_classes = (AllowAny,)
-#     serializer_class = CustomAuthTokenSerializer
-
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.serializer_class(data=request.data,
-#                                            context={'request': request})
-#         serializer.is_valid(raise_exception=True)
-#         user = serializer.validated_data['user']
-#         groups = [group.name for group in user.groups.all()]
-#         token, created = Token.objects.get_or_create(user=user)
-#         res = {
-#             'token': token.key,
-#             'user': {
-#                 'user_id': user.pk,
-#                 'name': f'{user.first_name} {user.last_name}',
-#                 'email': user.email,
-#                 'groups': groups
-#             }
-#         }
-#         return Response(res)
 
 
 class LoginView(APIView):
@@ -197,14 +167,13 @@ def update_user(request):
         user.email = data['username']
         user.username = data['username']
         user.save()
-
-        profile = user.profile
-        if profile:
-            profile.faculty_id = data['faculty']
-            profile.department_id = data['department']
-            profile.qualification_id = data['qualification']
-            profile.phone = data['phone']
-            profile.save()
+        profile, _ = Profile.objects.get_or_create(user=user)
+        profile.faculty_id = data['faculty']
+        profile.department_id = data['department']
+        profile.qualification_id = data['qualification']
+        profile.designation = data['designation']
+        profile.phone = data['phone']
+        profile.save()
         
         user_data = UserSerializer(user).data
         user_data['groups'] = [group.name for group in user.groups.all()]
@@ -248,10 +217,7 @@ def set_password(request):
         token = Token.objects.get(key=data['token'])
         if token:
             user = token.user
-            print(user)
-            print(data['new_password'])
             user.set_password(data['new_password'])
-            user.save()
             return Response({'detail': 'Your password has been updated'}, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
