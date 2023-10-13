@@ -25,6 +25,7 @@ from django.contrib.auth.models import User
 from rest_framework.decorators import api_view, permission_classes
 from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
+from templated_email import send_templated_mail
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -231,6 +232,7 @@ def reset_password(request):
             'emails/password-reset.html',
             context
             )
+        
 
         return Response({'detail': 'A link has been sent to your email. Click the link to reset your password'}, status=status.HTTP_200_OK)
 

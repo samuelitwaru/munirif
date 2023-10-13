@@ -180,6 +180,6 @@ PROPOSAL_FILES_URL = MEDIA_URL + 'proposal_files'
 print(PROPOSAL_FILES_URL)
 
 if STAGING:
-    CLIENT_ADDRESS = 'muni-rif.web.app'
+    CLIENT_ADDRESS = 'https://muni-rif.web.app'
 else:
-    CLIENT_ADDRESS = '127.0.0.1:9000'
+    CLIENT_ADDRESS = 'http://127.0.0.1:9000'
