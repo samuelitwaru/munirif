@@ -33,6 +33,7 @@ class ScoreSerializer(serializers.ModelSerializer):
     user__first_name = serializers.CharField(source='user.first_name', read_only=True)
     user__last_name = serializers.CharField(source='user.last_name', read_only=True)
     user__username = serializers.CharField(source='user.username', read_only=True)
+    total_score = serializers.IntegerField(read_only=True)
     proposal_detail = ProposalSerializer(source='proposal', read_only=True)
     class Meta:
         model = Score

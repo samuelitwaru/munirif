@@ -90,6 +90,11 @@ class Score(models.Model):
     class Meta:
         unique_together = ('user', 'proposal')
     
+    @property
+    def total_score(self):
+        sections = map(lambda x: x.name, Section.objects.all())
+        return sum([(getattr(self, section, 0) or 0) for section in sections])
+    
 class File(models.Model):
     name = models.CharField(max_length=64)
     description = models.CharField(max_length=128, null=True, blank=True)
