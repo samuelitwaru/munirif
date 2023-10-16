@@ -53,6 +53,7 @@ class SignupView(APIView):
             profile.phone=request.data['phone']
             profile.gender=request.data['gender']
             profile.designation=request.data['designation']
+            profile.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -252,34 +253,3 @@ def complete_signup(request):
         'token': token
     }
     return render(request, 'account/complete-signup.html', context)
-
-# def complete_signup2(request):
-#     token = request.GET.get("token")
-#     token = Token.objects.filter(key=token).first()
-#     _next = request.GET.get("next")
-#     complete_signup_form = CompleteSignupForm()
-
-#     if token:
-#         user = token.user
-#         if request.method == 'POST':
-#             complete_signup_form = CompleteSignupForm(request.POST)
-#             if complete_signup_form.is_valid():
-#                 data = complete_signup_form.cleaned_data
-#                 user.first_name = data['first_name']
-#                 user.last_name = data['last_name']
-#                 user.set_password(data['password'])
-#                 user.save()
-
-#                 user.groups.add(Group.objects.get(name='reviewer'))
-                
-#                 context = {
-#                     'new_window_url': _next
-#                 }
-#                 return render(request, 'blank.html', context)
-#     else:
-#         messages.error(request, 'Invalid Request', extra_tags='danger')
-#     context = {
-#         'complete_signup_form': complete_signup_form,
-#         'token': token
-#     }
-#     return render(request, 'account/complete-signup.html', context)
