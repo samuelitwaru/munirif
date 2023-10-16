@@ -24,6 +24,8 @@ class ProposalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proposal
         fields = '__all__'
+        read_only_fields = ('team',)
+        
 
 class ProposalTeamSerializer(serializers.Serializer):
     email = serializers.EmailField()
