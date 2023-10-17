@@ -49,7 +49,7 @@ class Proposal(models.Model):
     workplan = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=64, default='EDITING', choices=STATUS_CHOICES) # editing, submitted, scoring, reviewed
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    team = models.ManyToManyField(User, related_name='team_proposals')
+    team_members = models.ManyToManyField(User, related_name='team_proposals')
 
 
 class Score(models.Model):
