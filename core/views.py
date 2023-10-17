@@ -32,7 +32,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['GET'], name='team', url_path=r'team')
     def team(self, request, pk, *args, **kwargs):
         proposal = Proposal.objects.get(id=pk)
-        team_srializer = UserSerializer(proposal.team, many=True)
+        team_srializer = UserSerializer(proposal.team_members, many=True)
         return Response(team_srializer.data)
     
     @action(detail=True, methods=['POST'], name='add_team', url_path=r'team/add', serializer_class=ProposalTeamSerializer)
@@ -51,7 +51,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 template = 'emails/member-invitation.html'
                 if not user.is_active or not user.profile: template = 'emails/new-user-member-invitation.html'
                 # if not user.is_active: template = 'emails/another.html'
-                proposal.team.add(user)
+                proposal.team_members.add(user)
                 # send reviewership email
                 # send_html_email(
                 #     request,
@@ -60,7 +60,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 #     template,
                 #     context
                 # )
-                team_srializer = UserSerializer(proposal.team, many=True)
+                team_srializer = UserSerializer(proposal.team_members, many=True)
                 return Response(team_srializer.data)
             bad_res_data = serializer.errors
         return Response(bad_res_data, status=status.HTTP_400_BAD_REQUEST)
@@ -74,8 +74,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
             user_id = data['user']
             user = User.objects.get(id=user_id)
             if user:
-                proposal.team.remove(user)
-                team_srializer = UserSerializer(proposal.team, many=True)
+                proposal.team_members.remove(user)
+                team_srializer = UserSerializer(proposal.team_members, many=True)
                 return Response(team_srializer.data)
         return Response({'detail': 'Invalid Data'}, status=status.HTTP_400_BAD_REQUEST)
         
