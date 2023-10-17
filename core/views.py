@@ -45,11 +45,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 data = request.data
                 email = data.get('email')
                 user = User.objects.get(username=email)
-                user.groups.add(Group.objects.get(name='member'))
-                token, _ = Token.objects.get_or_create(user=user)
-                context = {'proposal': proposal, 'token':token, 'client_address': settings.CLIENT_ADDRESS}
-                template = 'emails/member-invitation.html'
-                if not user.is_active or not user.profile: template = 'emails/new-user-member-invitation.html'
+                # user.groups.add(Group.objects.get(name='appli'))
+                # token, _ = Token.objects.get_or_create(user=user)
+                # context = {'proposal': proposal, 'token':token, 'client_address': settings.CLIENT_ADDRESS}
+                # template = 'emails/member-invitation.html'
+                # if not user.is_active or not user.profile: template = 'emails/new-user-member-invitation.html'
                 # if not user.is_active: template = 'emails/another.html'
                 proposal.team_members.add(user)
                 # send reviewership email
