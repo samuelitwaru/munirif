@@ -39,6 +39,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def add_team(self, request, pk, *args, **kwargs):
         proposal = Proposal.objects.get(id=pk)
         serializer = ProposalTeamSerializer(data=request.data)
+        print(serializer.is_valid())
+        print(serializer.error_messages)
         if proposal:
             bad_res_data = {'detail': 'Invalid Data'}
             if serializer.is_valid():

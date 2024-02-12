@@ -32,7 +32,7 @@ class Section(models.Model):
      ref = models.CharField(max_length=16)
      name = models.CharField(max_length=32)
      title = models.CharField(max_length=32)
-     word_limit = models.IntegerField()
+     word_limit = models.IntegerField(default=5000)
 
 class Proposal(models.Model):
     title = models.CharField(max_length=128)
@@ -96,7 +96,7 @@ class Score(models.Model):
         return sum([(getattr(self, section, 0) or 0) for section in sections])
     
 class File(models.Model):
-    name = models.CharField(max_length=64)
+    name = models.CharField(max_length=128)
     description = models.CharField(max_length=128, null=True, blank=True)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     file = models.FileField(storage=file_storage)
