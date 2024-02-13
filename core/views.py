@@ -1,6 +1,7 @@
 # views.py
 from rest_framework import viewsets, filters
 from accounts.serializers import UserSerializer
+from utils.helpers import get_host_name, write_xlsx_file
 
 from utils.mails import send_html_email
 from .models import Faculty, Proposal, Qualification, File, Score, Section
@@ -47,21 +48,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 data = request.data
                 email = data.get('email')
                 user = User.objects.get(username=email)
-                # user.groups.add(Group.objects.get(name='appli'))
-                # token, _ = Token.objects.get_or_create(user=user)
-                # context = {'proposal': proposal, 'token':token, 'client_address': settings.CLIENT_ADDRESS}
-                # template = 'emails/member-invitation.html'
-                # if not user.is_active or not user.profile: template = 'emails/new-user-member-invitation.html'
-                # if not user.is_active: template = 'emails/another.html'
                 proposal.team_members.add(user)
-                # send reviewership email
-                # send_html_email(
-                #     request,
-                #     'PROPOSAL MEMBER INVITATION',
-                #     [email],
-                #     template,
-                #     context
-                # )
                 team_srializer = UserSerializer(proposal.team_members, many=True)
                 return Response(team_srializer.data)
             bad_res_data = serializer.errors
@@ -70,7 +57,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['POST'], name='remove_team', url_path=r'team/remove')
     def remove_team(self, request, pk, *args, **kwargs):
         proposal = Proposal.objects.get(id=pk)
-        print(request.data)
         if proposal:
             data = request.data
             user_id = data['user']
@@ -80,8 +66,24 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 team_srializer = UserSerializer(proposal.team_members, many=True)
                 return Response(team_srializer.data)
         return Response({'detail': 'Invalid Data'}, status=status.HTTP_400_BAD_REQUEST)
-        
 
+    @action(detail=True, methods=['GET'], name='download_score_sheet', url_path=r'score-sheet/download')
+    def download_score_sheet(self, request, pk, *args, **kwargs):
+        proposal = Proposal.objects.get(id=pk)
+        sections = Section.objects.all()
+        scores = proposal.score_set.all()
+        rows = []
+        for index, section in enumerate(sections):
+            data = [section.title] + [getattr(score, section.name) for score in scores] + [f"=sum({chr(ord('b'))}{index+2}:{chr(ord('b')+len(scores)-1)}{index+2})"] + [f"=average({chr(ord('b'))}{index+2}:{chr(ord('b')+len(scores)-1)}{index+2})"]
+            rows.append(data)
+        columns = ['Section'] + [str(score.user) for score in scores] + ['TOTAL', 'AVERAGE']
+
+        foot = ['TOTAL'] + [f'=sum({chr(num)}2:{chr(num)}12)' for num in range(ord('b'), ord('b')+len(scores))]
+        rows.append(foot)
+        file = write_xlsx_file(f'score-sheet-{proposal.id}.xlsx', columns, rows)
+        host = get_host_name(request)
+        return Response({'file_url':f'{host}{file}'}) 
+        
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.all()
     serializer_class = SectionSerializer
