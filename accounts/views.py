@@ -219,6 +219,7 @@ def set_password(request):
         if token:
             user = token.user
             user.set_password(data['new_password'])
+            user.save()
             return Response({'detail': 'Your password has been updated'}, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
