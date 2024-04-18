@@ -4,6 +4,7 @@ from rest_framework import filters
 import django_filters
 from django.contrib.auth.models import User
 
+
 class UserFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         # Implement your custom filtering logic here
@@ -14,4 +15,6 @@ class UserFilter(filters.BaseFilterBackend):
             group_names = group_names.split(',')
             queryset = queryset.filter(groups__name__in=group_names)
         return queryset
+    
+
 

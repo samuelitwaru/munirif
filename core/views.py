@@ -1,6 +1,7 @@
 # views.py
 from rest_framework import viewsets, filters
 from accounts.serializers import UserSerializer
+from core.filters import ScoreFilter
 from utils.helpers import get_host_name, write_xlsx_file
 
 from utils.mails import send_html_email
@@ -13,7 +14,6 @@ from django.conf import settings
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework import status
-
 
 class ProposalViewSet(viewsets.ModelViewSet):
     queryset = Proposal.objects.all()
@@ -102,13 +102,9 @@ class FileViewSet(viewsets.ModelViewSet):
 class ScoreViewSet(viewsets.ModelViewSet):
     queryset = Score.objects.all()
     serializer_class = ScoreSerializer
-
-    def get_queryset(self):
-        params = self.request.query_params
-        queryset = super().get_queryset()
-        if params:
-            queryset = queryset.filter(**params.dict())
-        return queryset
+    filter_backends = [DjangoFilterBackend, ScoreFilter]
+    filterset_fields = ['proposal', 'status']
+    
 
     def create(self, request, *args, **kwargs):
         user = request.data['user']
@@ -120,13 +116,14 @@ class ScoreViewSet(viewsets.ModelViewSet):
         request.data['user'] = user.id
         token, _ = Token.objects.get_or_create(user=user)
         context = {'proposal': proposal, 'token':token, 'client_address': settings.CLIENT_ADDRESS}
-        template = 'emails/review-invitation.html'
-        if not user.is_active or not user.profile: template = 'emails/new-user-review-invitation.html'
         # if not user.is_active: template = 'emails/another.html'
         if created:
             user.is_active = False
             user.save()
 
+        template = 'emails/review-invitation.html'
+        if not user.is_active or not user.profile: template = 'emails/new-user-review-invitation.html'
+        
         # send reviewership email
         send_html_email(
             request,

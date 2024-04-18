@@ -63,9 +63,7 @@ class FacultySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProfileSerializer(serializers.ModelSerializer):
-    faculty = FacultySerializer()
-    department = DepartmentSerializer()
-    qualification = QualificationSerializer()
+    
     class Meta:
         model = Profile
         fields = '__all__'

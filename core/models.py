@@ -28,13 +28,20 @@ file_storage = FileSystemStorage(
     base_url=settings.PROPOSAL_FILES_URL
 )
 
+class TimeStampedModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    class Meta:
+        abstract = True
+
 class Section(models.Model):
      ref = models.CharField(max_length=16)
      name = models.CharField(max_length=32)
      title = models.CharField(max_length=32)
      word_limit = models.IntegerField(default=5000)
 
-class Proposal(models.Model):
+class Proposal(TimeStampedModel):
     title = models.CharField(max_length=128)
     problem = models.TextField(null=True, blank=True)
     solution = models.TextField(null=True, blank=True)
@@ -52,7 +59,7 @@ class Proposal(models.Model):
     team_members = models.ManyToManyField(User, related_name='team_proposals')
 
 
-class Score(models.Model):
+class Score(TimeStampedModel):
     problem = models.IntegerField(null=True)
     solution = models.IntegerField(null=True)
     outputs = models.IntegerField(null=True)
@@ -86,6 +93,8 @@ class Score(models.Model):
     status = models.CharField(max_length=64, default='PENDING', choices=SCORE_STATUS_CHOICES) # PENDING, ACCEPTED, COMPLETED
     user = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
+
+    accepted_at = models.DateTimeField(null=True)
     
     class Meta:
         unique_together = ('user', 'proposal')
