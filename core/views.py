@@ -153,4 +153,4 @@ class QualificationViewSet(viewsets.ModelViewSet):
     serializer_class = QualificationSerializer
 
 
-delete_expired_invitations(schedule=60)
+# delete_expired_invitations(schedule=60)
