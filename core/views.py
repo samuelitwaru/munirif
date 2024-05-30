@@ -3,7 +3,7 @@ from rest_framework import viewsets, filters
 from django.shortcuts import get_object_or_404
 from accounts.serializers import UserSerializer
 from core.filters import ProposalFilter, ScoreFilter
-from core.tasks import delete_expired_invitations
+# from core.tasks import delete_expired_invitations
 from utils.helpers import get_host_name, write_xlsx_file
 from datetime import datetime, timedelta
 from django.utils import timezone
