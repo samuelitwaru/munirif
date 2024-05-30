@@ -5,6 +5,8 @@ from django.dispatch import receiver
 import os
 from django.db.models.signals import pre_save, post_save, post_delete, pre_delete
 from django.dispatch import receiver
+from datetime import timedelta
+from django.utils import timezone
 
 
 STATUS_CHOICES = [
@@ -95,9 +97,16 @@ class Score(TimeStampedModel):
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
 
     accepted_at = models.DateTimeField(null=True)
+    is_recommended = models.BooleanField(default=False)
+    expires_at = models.DateTimeField(default=timezone.now() + timedelta(7))
     
     class Meta:
         unique_together = ('user', 'proposal')
+    
+    def save(self, *args, **kwargs):
+        expires_at = timezone.now() + timedelta(7)
+        self.expires_at = expires_at
+        super(Score, self).save(*args, **kwargs)
     
     @property
     def total_score(self):

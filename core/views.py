@@ -1,9 +1,12 @@
 # views.py
 from rest_framework import viewsets, filters
+from django.shortcuts import get_object_or_404
 from accounts.serializers import UserSerializer
-from core.filters import ScoreFilter
+from core.filters import ProposalFilter, ScoreFilter
+from core.tasks import delete_expired_invitations
 from utils.helpers import get_host_name, write_xlsx_file
-
+from datetime import datetime, timedelta
+from django.utils import timezone
 from utils.mails import send_html_email
 from .models import Faculty, Proposal, Qualification, File, Score, Section
 from .serializers import FacultySerializer, FileSerializer, ProposalSerializer, ProposalTeamSerializer, QualificationSerializer, ScoreSerializer, SectionSerializer
@@ -19,16 +22,18 @@ class ProposalViewSet(viewsets.ModelViewSet):
     queryset = Proposal.objects.all()
     serializer_class = ProposalSerializer
     search_fields = ['title']
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, ProposalFilter]
+    filterset_fields = '__all__'
+    # filterset_class = ProposalFilter
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        params = self.request.query_params.dict()
-        if 'search' in params:
-            params.pop('search')
-        if params:
-            queryset = queryset.filter(**params)
-        return queryset
+    # def get_queryset(self):
+    #     queryset = super().get_queryset()
+    #     params = self.request.query_params.dict()
+    #     if 'search' in params:
+    #         params.pop('search')
+    #     if params:
+    #         queryset = queryset.filter(**params)
+    #     return queryset
     
     @action(detail=True, methods=['GET'], name='team', url_path=r'team')
     def team(self, request, pk, *args, **kwargs):
@@ -103,9 +108,8 @@ class ScoreViewSet(viewsets.ModelViewSet):
     queryset = Score.objects.all()
     serializer_class = ScoreSerializer
     filter_backends = [DjangoFilterBackend, ScoreFilter]
-    filterset_fields = ['proposal', 'status']
+    filterset_fields = ['proposal', 'status', 'user']
     
-
     def create(self, request, *args, **kwargs):
         user = request.data['user']
         email = request.data['email']
@@ -134,6 +138,12 @@ class ScoreViewSet(viewsets.ModelViewSet):
         )
         return super().create(request, *args, **kwargs)
 
+    @action(detail=True, methods=['GET'], name='validate', url_path=r'validate')
+    def validate(self, request, pk, *args, **kwargs):
+        score = get_object_or_404(Score, id=pk)
+        is_expired = timezone.now() > score.expires_at
+        return Response({'is_expired': is_expired}, status=status.HTTP_200_OK)
+
 class FacultyViewSet(viewsets.ModelViewSet):
     queryset = Faculty.objects.all()
     serializer_class = FacultySerializer
@@ -141,3 +151,6 @@ class FacultyViewSet(viewsets.ModelViewSet):
 class QualificationViewSet(viewsets.ModelViewSet):
     queryset = Qualification.objects.all()
     serializer_class = QualificationSerializer
+
+
+delete_expired_invitations(schedule=60)
