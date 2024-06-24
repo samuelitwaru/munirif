@@ -53,7 +53,7 @@ class Section(models.Model):
 
 class Proposal(TimeStampedModel):
     title = models.CharField(max_length=128)
-    # call = models.ForeignKey(Call)
+    call = models.ForeignKey(Call, on_delete=models.SET_NULL, null=True)
     problem = models.TextField(null=True, blank=True)
     solution = models.TextField(null=True, blank=True)
     outputs = models.TextField(null=True, blank=True)
