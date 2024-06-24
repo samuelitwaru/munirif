@@ -37,14 +37,23 @@ class TimeStampedModel(models.Model):
     class Meta:
         abstract = True
 
+class Call(TimeStampedModel):
+    title = models.CharField(max_length=128)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.title
+
+
 class Section(models.Model):
-     ref = models.CharField(max_length=16)
-     name = models.CharField(max_length=32)
-     title = models.CharField(max_length=32)
-     word_limit = models.IntegerField(default=5000)
+     ref = models.CharField(max_length=128)
+     name = models.CharField(max_length=128)
+     title = models.CharField(max_length=128)
+     word_limit = models.IntegerField(default=500)
 
 class Proposal(TimeStampedModel):
     title = models.CharField(max_length=128)
+    # call = models.ForeignKey(Call)
     problem = models.TextField(null=True, blank=True)
     solution = models.TextField(null=True, blank=True)
     outputs = models.TextField(null=True, blank=True)
