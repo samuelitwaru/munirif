@@ -97,13 +97,12 @@ SQLITE_SETTINGS = {
 }
 MYSQL_SETTINGS = {
     'ENGINE': 'django.db.backends.mysql',
-    'NAME': 'munirif',
-    'USER': 'root',
-    'PASSWORD': 'bratz123',
-    'HOST': 'localhost',   # Or your MySQL host
-    'PORT': '3306',        # MySQL default port
+    'NAME': os.getenv('DB_NAME'),
+    'USER': os.getenv('DB_USER'),
+    'PASSWORD': os.getenv('DB_PASSWORD'),
+    'HOST': os.getenv('DB_HOST'), 
+    'PORT': os.getenv('DB_PORT'),
 }
-
 
 
 DATABASES = {
