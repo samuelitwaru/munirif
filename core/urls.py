@@ -2,10 +2,11 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from accounts.views import GroupViewSet, UserViewSet
-from .views import FacultyViewSet, FileViewSet, ProposalViewSet, QualificationViewSet, ScoreViewSet, SectionViewSet
+from .views import *
 from munirif import router
 
 # Create a router and register our viewset with it.
+router.register(r'calls', CallViewSet)
 router.register(r'sections', SectionViewSet)
 router.register(r'users', UserViewSet)
 router.register(r'groups', GroupViewSet)

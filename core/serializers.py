@@ -1,7 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Department, Faculty, Proposal, Qualification, Profile, File, Score, Section
-
+from .models import *
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -9,6 +8,11 @@ class FileSerializer(serializers.ModelSerializer):
         model = File
         fields = '__all__'
 
+
+class CallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Call
+        fields = '__all__'
 
 
 class SectionSerializer(serializers.ModelSerializer):

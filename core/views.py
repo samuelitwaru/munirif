@@ -8,7 +8,7 @@ from utils.helpers import get_host_name, write_xlsx_file
 from datetime import datetime, timedelta
 from django.utils import timezone
 from utils.mails import send_html_email
-from .models import Faculty, Proposal, Qualification, File, Score, Section
+from .models import *
 from .serializers import FacultySerializer, FileSerializer, ProposalSerializer, ProposalTeamSerializer, QualificationSerializer, ScoreSerializer, SectionSerializer
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
@@ -24,16 +24,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     search_fields = ['title']
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, ProposalFilter]
     filterset_fields = '__all__'
-    # filterset_class = ProposalFilter
-
-    # def get_queryset(self):
-    #     queryset = super().get_queryset()
-    #     params = self.request.query_params.dict()
-    #     if 'search' in params:
-    #         params.pop('search')
-    #     if params:
-    #         queryset = queryset.filter(**params)
-    #     return queryset
+   
     
     @action(detail=True, methods=['GET'], name='team', url_path=r'team')
     def team(self, request, pk, *args, **kwargs):
@@ -88,7 +79,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
         file = write_xlsx_file(f'score-sheet-{proposal.id}.xlsx', columns, rows)
         host = get_host_name(request)
         return Response({'file_url':f'{host}{file}'}) 
-        
+
+class CallViewSet(viewsets.ModelViewSet):
+    queryset = Call.objects.all()
+    serializer_class = SectionSerializer
+
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.all()
     serializer_class = SectionSerializer
