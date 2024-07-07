@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from utils.mails import send_html_email
 from .models import *
-from .serializers import FacultySerializer, FileSerializer, ProposalSerializer, ProposalTeamSerializer, QualificationSerializer, ScoreSerializer, SectionSerializer
+from .serializers import *
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User, Group
@@ -80,24 +80,65 @@ class ProposalViewSet(viewsets.ModelViewSet):
         host = get_host_name(request)
         return Response({'file_url':f'{host}{file}'}) 
 
+class BudgetViewSet(viewsets.ModelViewSet):
+    queryset = Budget.objects.all()
+    serializer_class = BudgetSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = "__all__"
+
+class TeamViewSet(viewsets.ModelViewSet):
+    queryset = Team.objects.all()
+    serializer_class = TeamSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = "__all__"
+
+
+class ThemeViewSet(viewsets.ModelViewSet):
+    queryset = Theme.objects.all()
+    serializer_class = ThemeSerializer
+
 class CallViewSet(viewsets.ModelViewSet):
     queryset = Call.objects.all()
-    serializer_class = SectionSerializer
+    serializer_class = CallSerializer
+
+    @action(detail=True, methods=['GET'], name='set_as_active', url_path=r'set-as-active')
+    def set_as_active(self, request, pk, *args, **kwargs):
+        call = get_object_or_404(Call, id=pk)
+        call.is_active = True
+        call.save()
+        entity = Entity.objects.first()
+        if entity: 
+            entity.current_call = call
+            entity.save()
+        data = CallSerializer(call).data
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class ReportingDateViewSet(viewsets.ModelViewSet):
+    queryset = ReportingDate.objects.all()
+    serializer_class = ReportingDateSerializer
+
 
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.all()
     serializer_class = SectionSerializer
 
+class AttachmentViewSet(viewsets.ModelViewSet):
+    queryset = Attachment.objects.all()
+    serializer_class = AttachmentSerializer
+
 class FileViewSet(viewsets.ModelViewSet):
     queryset = File.objects.all()
     serializer_class = FileSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['proposal_id', 'attachment_id']
 
-    def get_queryset(self):
-        params = self.request.query_params
-        queryset = super().get_queryset()
-        if params:
-            queryset = queryset.filter(**params.dict())
-        return queryset
+
+class ReportViewSet(viewsets.ModelViewSet):
+    queryset = Report.objects.all()
+    serializer_class = ReportSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['proposal_id', 'reporting_date_id']
 
 class ScoreViewSet(viewsets.ModelViewSet):
     queryset = Score.objects.all()
@@ -146,6 +187,11 @@ class FacultyViewSet(viewsets.ModelViewSet):
 class QualificationViewSet(viewsets.ModelViewSet):
     queryset = Qualification.objects.all()
     serializer_class = QualificationSerializer
+
+
+class EntityViewSet(viewsets.ModelViewSet):
+    queryset = Entity.objects.all()
+    serializer_class = EntitySerializer
 
 
 # delete_expired_invitations(schedule=60)

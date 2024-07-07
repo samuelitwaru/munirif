@@ -8,10 +8,26 @@ class FileSerializer(serializers.ModelSerializer):
         model = File
         fields = '__all__'
 
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = '__all__'
+
 
 class CallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Call
+        fields = '__all__'
+
+class ReportingDateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReportingDate
+        fields = '__all__'
+
+
+class ThemeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Theme
         fields = '__all__'
 
 
@@ -20,6 +36,11 @@ class SectionSerializer(serializers.ModelSerializer):
         model = Section
         fields = '__all__'
 
+class AttachmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Attachment
+        fields = '__all__'
+        
 
 class ProposalSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, source='file_set', read_only=True)
@@ -29,6 +50,20 @@ class ProposalSerializer(serializers.ModelSerializer):
         model = Proposal
         fields = '__all__'
         read_only_fields = ('team_members',)
+        extra_kwargs = {
+            'theme': {'required': True},
+        }
+
+
+class BudgetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Budget
+        fields = '__all__'
+
+class TeamSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = '__all__'
         
 
 class ProposalTeamSerializer(serializers.Serializer):
@@ -66,8 +101,16 @@ class FacultySerializer(serializers.ModelSerializer):
         model = Faculty
         fields = '__all__'
 
+
 class ProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Profile
+        fields = '__all__'
+
+
+class EntitySerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Entity
         fields = '__all__'

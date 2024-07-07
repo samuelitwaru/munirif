@@ -11,15 +11,21 @@ from django.utils import timezone
 
 STATUS_CHOICES = [
     ('EDITING', 'EDITING'),
-    ('SUBMITTED', 'SUBMITTED'),
-    ('SCORING', 'SCORING'),
+    ('PENDING', 'PENDING'),
+    ('REVIEWING', 'REVIEWING'),
     ('REVIEWED', 'REVIEWED'),
+    ('SELECTED', 'SELECTED'),
 ]
 
 SCORE_STATUS_CHOICES = [
     ('PENDING', 'PENDING'),
     ('IN PROGRESS', 'IN PROGRESS'),
     ('COMPLETED', 'COMPLETED'),
+]
+
+GENDER_CHOICES = [
+    ('MALE', 'MALE'),
+    ('FEMALE', 'FEMALE'),
 ]
 
 
@@ -40,19 +46,54 @@ class TimeStampedModel(models.Model):
 class Call(TimeStampedModel):
     title = models.CharField(max_length=128)
     is_active = models.BooleanField(default=True)
+    date_from = models.DateField(null=True)
+    date_to = models.DateField(null=True)
+    submission_date = models.DateField(null=True)
+    review_date = models.DateField(null=True)
+    selection_date = models.DateField(null=True)
 
     def __str__(self):
         return self.title
+    
+class ReportingDate(TimeStampedModel):
+    title = models.CharField(max_length=128)
+    date = models.DateField()
+    call = models.ForeignKey(Call, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f'{self.title} {self.call}'
 
 
 class Section(models.Model):
      ref = models.CharField(max_length=128)
      name = models.CharField(max_length=128)
      title = models.CharField(max_length=128)
-     word_limit = models.IntegerField(default=500)
+     word_limit = models.IntegerField(default=250)
+     lower_limit = models.IntegerField(default=50)
+     description = models.CharField(max_length=1024, default='')
+
+     def __str__(self) -> str:
+         return self.title
+
+class Attachment(models.Model):
+    title = models.CharField(max_length=128)
+    description = models.TextField(blank=True)
+    max_size = models.IntegerField(default=5000)
+
+    def __str__(self):
+        return self.title
+
+
+class Theme(TimeStampedModel):
+    title = models.CharField(max_length=128)
+    call = models.ForeignKey(Call, null=True, on_delete=models.SET_NULL)
+
+    def __str__(self) -> str:
+        return self.title
 
 class Proposal(TimeStampedModel):
     title = models.CharField(max_length=128)
+    theme = models.ForeignKey(Theme, null=True, on_delete=models.SET_NULL, blank=True)
     call = models.ForeignKey(Call, on_delete=models.SET_NULL, null=True)
     problem = models.TextField(null=True, blank=True)
     solution = models.TextField(null=True, blank=True)
@@ -67,8 +108,30 @@ class Proposal(TimeStampedModel):
     workplan = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=64, default='EDITING', choices=STATUS_CHOICES) # editing, submitted, scoring, reviewed
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    team_members = models.ManyToManyField(User, related_name='team_proposals')
+    team_members = models.ManyToManyField(User, related_name='team_proposals', blank=True)
 
+    def __str__(self):
+        return self.title
+    
+
+class Budget(TimeStampedModel):
+    item = models.CharField(max_length=128)
+    quantity = models.PositiveIntegerField()
+    units = models.CharField(max_length=64)
+    unit_cost = models.PositiveIntegerField()
+    proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
+    @property
+    def total_cost(self):
+        return self.quantity * self.unit_cost
+    
+class Team(TimeStampedModel):
+    full_name = models.CharField(max_length=128)
+    email = models.EmailField()
+    telephone = models.CharField(max_length=64)
+    proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name='team_set')
+    
+    def __str__(self) -> str:
+        return f"{self.full_name} - {self.email}"
 
 class Score(TimeStampedModel):
     problem = models.IntegerField(null=True)
@@ -127,7 +190,16 @@ class File(models.Model):
     description = models.CharField(max_length=128, null=True, blank=True)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     file = models.FileField(storage=file_storage)
+    attachment = models.ForeignKey(Attachment, on_delete=models.SET_NULL, null=True, blank=True)
 
+    def __str__(self) -> str:
+        return f'{self.name} - {self.proposal}'
+    
+class Report(models.Model):
+    title = models.CharField(max_length=128)
+    file = models.FileField(storage=file_storage)
+    proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
+    reporting_date = models.ForeignKey(ReportingDate, on_delete=models.SET_NULL, null=True, blank=True)
 
 class Qualification(models.Model):
     name = models.CharField(max_length=64)
@@ -154,7 +226,7 @@ class Profile(models.Model):
     faculty = models.ForeignKey(Faculty, null=True, on_delete=models.SET_NULL)
     department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL)
     qualification = models.ForeignKey(Qualification, null=True, on_delete=models.SET_NULL)
-    gender = models.CharField(max_length=8)
+    gender = models.CharField(max_length=8, choices=GENDER_CHOICES)
     phone = models.CharField(max_length=10)
     designation = models.CharField(max_length=32)
     
@@ -169,7 +241,7 @@ def on_score_status_change(sender, instance, **kwargs):
     if all(list(map(lambda x: x.status=='COMPLETED', scores))):
         proposal.status = 'REVIEWED'
     else:
-        proposal.status = 'SCORING'
+        proposal.status = 'PENDING'
     proposal.save()
 
 
@@ -179,6 +251,31 @@ def create_profile(sender, instance, created, **kwargs):
         Profile.objects.create(user=instance)
 
 
+@receiver(post_save, sender=Team)
+@receiver(post_delete, sender=Team)
+def on_team_added_or_deleted(sender, instance, **kwargs):
+    proposal = instance.proposal
+    table = ''
+    for team in proposal.team_set.all():
+        table += f'<tr><td>{team.full_name}</td><td>{team.email}</td><td>{team.telephone}</td></tr>'
+    if table:
+        table = '<table class="custom-table table-bordered">' + table + '</table>'
+    proposal.team = table
+    proposal.save()
+
+
+@receiver(post_save, sender=Budget)
+@receiver(post_delete, sender=Budget)
+def on_budget_added_or_deleted(sender, instance, **kwargs):
+    proposal = instance.proposal
+    table = ''
+    for budget in proposal.budget_set.all():
+        table += f'<tr><td>{budget.item}</td><td>{budget.quantity}</td><td>{budget.units}</td><td>{budget.unit_cost}</td><td>{budget.unit_cost * budget.quantity}</td></tr>'
+    if table:
+        table = '<table class="custom-table table-bordered">' + table + '</table>'
+    proposal.detailed_budget = table
+    proposal.save()
+
 @receiver(pre_delete, sender=File)
 def delete_file(sender, instance, **kwargs):
     # Get the path to the file
@@ -186,3 +283,8 @@ def delete_file(sender, instance, **kwargs):
     # Check if the file exists and delete it
     if os.path.isfile(file_path):
         os.remove(file_path)
+
+
+class Entity(models.Model):
+    name = models.CharField(max_length=128)
+    current_call = models.ForeignKey(Call, null=True, blank=True, on_delete=models.SET_NULL)

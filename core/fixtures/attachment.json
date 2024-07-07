@@ -1,0 +1,40 @@
+[
+    {
+        "model": "core.attachment",
+        "pk": 1,
+        "fields": {
+            "title": "Appointment Letter (P1)"
+        }
+    },
+    {
+        "model": "core.attachment",
+        "pk": 2,
+        "fields": {
+            "title": "Curriculum Vitae (PI)"
+        }
+    },
+    {
+        "model": "core.attachment",
+        "pk": 3,
+        "fields": {
+            "title": "Budget"
+        }
+    },
+
+    {
+        "model": "core.attachment",
+        "pk": 4,
+        "fields": {
+            "title": "Letters of Support"
+        }
+    },
+    {
+        "model": "core.attachment",
+        "pk": 5,
+        "fields": {
+            "title": "Additional Letters of Support"
+            
+        }
+    }
+  ]
+  
