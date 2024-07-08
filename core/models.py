@@ -28,6 +28,11 @@ GENDER_CHOICES = [
     ('FEMALE', 'FEMALE'),
 ]
 
+TEAM_ROLE_CHOICES = [
+    ('PI', 'PI'),
+    ('Co PI', 'Co PI'),
+    ('MEMBER', 'MEMBER')
+]
 
 from django.core.files.storage import FileSystemStorage
 
@@ -129,6 +134,7 @@ class Team(TimeStampedModel):
     full_name = models.CharField(max_length=128)
     email = models.EmailField()
     telephone = models.CharField(max_length=64)
+    role = models.CharField(max_length=64, choices=TEAM_ROLE_CHOICES, default='PI')
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name='team_set')
     
     def __str__(self) -> str:

@@ -120,19 +120,6 @@
         "model": "core.section",
         "pk": 10,
         "fields": {
-            "ref": "#detailed_budget",
-            "name": "detailed_budget",
-            "title": "Detailed Budget",
-            "description": "Teams will prepare a summary budget for their projects. Budgets should be submitted in the national currency (Uganda Shillings - UGX).",
-            "word_limit": 250,
-            "lower_limit": 1,
-            "max_score": 0
-        }
-    },
-    {
-        "model": "core.section",
-        "pk": 11,
-        "fields": {
             "ref": "#workplan",
             "name": "workplan",
             "title": "Workplan",
@@ -144,7 +131,7 @@
     },
     {
         "model": "core.section",
-        "pk": 12,
+        "pk": 11,
         "fields": {
             "ref": "#attachments",
             "name": "attachments",
