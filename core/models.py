@@ -71,6 +71,7 @@ class Section(models.Model):
      word_limit = models.IntegerField(default=250)
      lower_limit = models.IntegerField(default=50)
      description = models.CharField(max_length=1024, default='')
+     max_score = models.PositiveIntegerField(default=10)
 
      def __str__(self) -> str:
          return self.title

@@ -3,7 +3,7 @@
         "model": "core.attachment",
         "pk": 1,
         "fields": {
-            "title": "Appointment Letter (P1)"
+            "title": "Appointment Letter (PI)"
         }
     },
     {
