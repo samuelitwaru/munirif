@@ -8,7 +8,8 @@
             "title": "Problem",
             "description": "Different types of research/innovation gaps are anticipated, e.g., (i) those that need an innovation (technology or approach) to address a critical challenge or community need, (ii) those that target research and innovation ecosystem enhancement to overcome a major barrier that prevents high-value research from being conducted and (iii) those that target research and innovation ecosystem enhancement. A research problem is the discrepancy between the current knowledge and the desired knowledge and this should be clearly articulated. For projects that are innovation-based, a clear articulation of the stakeholder need for the solution should be articulated.",
             "word_limit": 250,
-            "lower_limit": 50
+            "lower_limit": 50,
+            "max_Score": 12
         }
     },
     {
@@ -20,7 +21,8 @@
             "title": "Solution",
             "description": "For research-based projects, the team should describe clearly but concisely the methods proposed, demonstrating scientific merit and rigor. For innovation-based projects, the team should describe concisely the design approach to be used and the stage of the solution proposed.",
             "word_limit": 250,
-            "lower_limit": 50
+            "lower_limit": 50,
+            "max_Score": 24
         }
     },
     {
@@ -32,7 +34,8 @@
             "title": "Outputs, Outcomes and Impact",
             "description": "Teams will be expected to describe clearly the outputs anticipated to arise from their projects. Outputs are the immediate tangible results of the research or innovation activities undertaken. Beyond outputs, applicants will describe the anticipated outcomes and impacts of the solution they propose. The target populations (primary and secondary) to be involved in and impacted by the project should be clearly described as well as the anticipated reach of the outcomes and impacts stated.",
             "word_limit": 250,
-            "lower_limit": 50
+            "lower_limit": 50,
+            "max_Score": 12
         }
     },
     {
@@ -44,7 +47,8 @@
             "title": "Team Composition",
             "description": "Researchers/innovators are encouraged to apply in teams (min 2 and max 4 people). Teams should demonstrate that they have the technical expertise to execute the planned project by including personal briefs of the team members. Only disciplines relevant to the proposed research question/innovation challenge should be represented. For research areas where a multi-sectoral/multi-disciplinary approach is clearly needed, the extent to which the composition of the team covers the pertinent sectors/disciplines will be important. Teams that include an industry, business, sector or implementing agency partner will have an added advantage. Teams should as much as possible, pay attention to gender integration.",
             "word_limit": 250,
-            "lower_limit": 1
+            "lower_limit": 1,
+            "max_Score": 6
         }
     },
     {
@@ -56,7 +60,8 @@
             "title": "Provision for Capacity Development",
             "description": "Articulate how they expect their project to build capacity for stakeholders and their own department. Examples could include mentorship of junior researchers, equipment, and training of investigators, students, research fellows or research assistants.",
             "word_limit": 250,
-            "lower_limit": 50
+            "lower_limit": 50,
+            "max_Score": 5
         }
     },
     {
@@ -68,7 +73,8 @@
             "title": "Dissemination, Scalability and Sustainability",
             "description": "Show a clear plan for dissemination of their findings to audiences critical for policy and program change so as to achieve impact at scale. For research-based projects, this will include a clear description of the knowledge translation and dissemination plan to stakeholders in the relevant sectors including the knowledge products anticipated to arise from the study (e.g., policy briefs, knowledge briefs, publications etc.). Innovation-based projects should articulate a scaling strategy, including linkage to scaling partners within the industry (for commercially viable enterprises), or within the relevant public sectors (for innovations targeted to the public) or within relevant implementing agencies (for social enterprises). Innovations targeting commercial interest should demonstrate the anticipated commercial potential, anticipated demand, anticipated patents, trademarks, etc. if applicable and the path to commercialization.",
             "word_limit": 250,
-            "lower_limit": 50
+            "lower_limit": 50,
+            "max_Score": 8
         }
     },
     {
@@ -80,7 +86,8 @@
             "title": "Ethical Implications and Environmental Impact",
             "description": "For research or innovation projects involving human subjects and are not benign investigations, teams should clearly articulate the anticipated ethical challenges if any, how subjects will be protected and how they will obtain the relevant ethical certifications. If the research involves animal subjects, in what ways are animal subjects involved and how will the animals be protected? How will animal welfare be ensured? For research that involves changes to the physical environment, researchers should explain the measures to ensure minimal damage to the environment (precautionary principle), and to monitor and mitigate such damage.",
             "word_limit": 250,
-            "lower_limit": 50
+            "lower_limit": 50,
+            "max_Score": 6
         }
     },
     {
@@ -92,7 +99,8 @@
             "title": "Conflict of Interest",
             "description": "Researchers should declare if there is any conflict of interest regarding their project e.g., if it is co-funded by an industry partner that may compromise the impartiality of the team or the outcomes of the study.",
             "word_limit": 250,
-            "lower_limit": 50
+            "lower_limit": 50,
+            "max_Score": 0
         }
     },
     {
@@ -104,7 +112,8 @@
             "title": "Summary Budget",
             "description": "Teams will prepare a summary budget for their projects. Budgets should be submitted in the national currency (Uganda Shillings - UGX).",
             "word_limit": 250,
-            "lower_limit": 50
+            "lower_limit": 50,
+            "max_Score": 15
         }
     },
     {
@@ -116,7 +125,8 @@
             "title": "Detailed Budget",
             "description": "Teams will prepare a summary budget for their projects. Budgets should be submitted in the national currency (Uganda Shillings - UGX).",
             "word_limit": 250,
-            "lower_limit": 1
+            "lower_limit": 1,
+            "max_Score": 0
         }
     },
     {
@@ -128,7 +138,8 @@
             "title": "Workplan",
             "description": "Teams should provide a list of key activities for the project clearly demonstrating the deliverables expected at each point. These will be used as the basis for tracking implementation of activities towards project goals and outputs. Given the time implications of the awards, it will be important that project teams commit to a clear time-bound set of deliverables all achievable within one year for the main deliverable targeted during the current period of funding. Failure to articulate a one (1) year plan will imply inability to utilize the grant funds within one (1) year.",
             "word_limit": 250,
-            "lower_limit": 50
+            "lower_limit": 50,
+            "max_Score": 12
         }
     },
     {
@@ -140,7 +151,8 @@
             "title": "Attachments",
             "description": "Attach support documents and references for your project.",
             "word_limit": 250,
-            "lower_limit": 5
+            "lower_limit": 5,
+            "max_Score": 0
         }
     }
 ]
