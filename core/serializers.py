@@ -44,6 +44,7 @@ class AttachmentSerializer(serializers.ModelSerializer):
 
 class ProposalSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, source='file_set', read_only=True)
+    theme_title = serializers.CharField(source='theme.title', read_only=True)
     user__first_name = serializers.CharField(source='user.first_name', read_only=True)
     user__last_name = serializers.CharField(source='user.last_name', read_only=True)
     class Meta:

@@ -100,6 +100,8 @@ class Theme(TimeStampedModel):
 class Proposal(TimeStampedModel):
     title = models.CharField(max_length=128)
     theme = models.ForeignKey(Theme, null=True, on_delete=models.SET_NULL, blank=True)
+    status = models.CharField(max_length=64, default='EDITING', choices=STATUS_CHOICES) # editing, submitted, scoring, reviewed
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     call = models.ForeignKey(Call, on_delete=models.SET_NULL, null=True)
     problem = models.TextField(null=True, blank=True)
     solution = models.TextField(null=True, blank=True)
@@ -112,8 +114,6 @@ class Proposal(TimeStampedModel):
     summary_budget = models.TextField(null=True, blank=True)
     detailed_budget = models.TextField(null=True, blank=True)
     workplan = models.TextField(null=True, blank=True)
-    status = models.CharField(max_length=64, default='EDITING', choices=STATUS_CHOICES) # editing, submitted, scoring, reviewed
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
     team_members = models.ManyToManyField(User, related_name='team_proposals', blank=True)
 
     def __str__(self):
