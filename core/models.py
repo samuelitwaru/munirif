@@ -240,6 +240,10 @@ class Profile(models.Model):
     def __str__(self):
         return f'{self.user.first_name} {self.user.last_name}'
 
+class ProfileTheme(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    theme = models.ForeignKey(Theme, on_delete=models.CASCADE)
+    
 @receiver(post_save, sender=Score)
 @receiver(post_delete, sender=Score)
 def on_score_status_change(sender, instance, **kwargs):
