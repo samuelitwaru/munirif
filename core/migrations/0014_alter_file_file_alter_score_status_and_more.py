@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='score',
             name='status',
-            field=models.CharField(choices=[('PENDING', 'PENDING'), ('IN PROGRESS', 'IN PROGRESS'), ('COMPLETED', 'COMPLETED')], default='PENDING', max_length=64),
+            field=models.CharField(choices=[('SUBMITTED', 'SUBMITTED'), ('IN PROGRESS', 'IN PROGRESS'), ('COMPLETED', 'COMPLETED')], default='SUBMITTED', max_length=64),
         ),
         migrations.AlterField(
             model_name='score',

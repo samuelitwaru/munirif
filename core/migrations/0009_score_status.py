@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='score',
             name='status',
-            field=models.CharField(choices=[('PENDING', 'PENDING'), ('ACCEPTED', 'ACCEPTED'), ('COMPLETED', 'COMPLETED')], default='PENDING', max_length=64),
+            field=models.CharField(choices=[('SUBMITTED', 'SUBMITTED'), ('ACCEPTED', 'ACCEPTED'), ('COMPLETED', 'COMPLETED')], default='SUBMITTED', max_length=64),
         ),
     ]

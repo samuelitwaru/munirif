@@ -11,14 +11,14 @@ from django.utils import timezone
 
 STATUS_CHOICES = [
     ('EDITING', 'EDITING'),
-    ('PENDING', 'PENDING'),
+    ('SUBMITTED', 'SUBMITTED'),
     ('REVIEWING', 'REVIEWING'),
     ('REVIEWED', 'REVIEWED'),
     ('SELECTED', 'SELECTED'),
 ]
 
 SCORE_STATUS_CHOICES = [
-    ('PENDING', 'PENDING'),
+    ('SUBMITTED', 'SUBMITTED'),
     ('IN PROGRESS', 'IN PROGRESS'),
     ('COMPLETED', 'COMPLETED'),
 ]
@@ -101,6 +101,7 @@ class Proposal(TimeStampedModel):
     title = models.CharField(max_length=128)
     theme = models.ForeignKey(Theme, null=True, on_delete=models.SET_NULL, blank=True)
     status = models.CharField(max_length=64, default='EDITING', choices=STATUS_CHOICES) # editing, submitted, scoring, reviewed
+    submission_date = models.DateField(null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     call = models.ForeignKey(Call, on_delete=models.SET_NULL, null=True)
     problem = models.TextField(null=True, blank=True)
@@ -171,7 +172,7 @@ class Score(TimeStampedModel):
     weaknesses = models.TextField(null=True, blank=True)
     comment = models.TextField(null=True)
 
-    status = models.CharField(max_length=64, default='PENDING', choices=SCORE_STATUS_CHOICES) # PENDING, ACCEPTED, COMPLETED
+    status = models.CharField(max_length=64, default='SUBMITTED', choices=SCORE_STATUS_CHOICES) # SUBMITTED, ACCEPTED, COMPLETED
     user = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
 
@@ -241,8 +242,11 @@ class Profile(models.Model):
         return f'{self.user.first_name} {self.user.last_name}'
 
 class ProfileTheme(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='themes')
     theme = models.ForeignKey(Theme, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.profile} - {self.theme}'
     
 @receiver(post_save, sender=Score)
 @receiver(post_delete, sender=Score)
@@ -252,7 +256,7 @@ def on_score_status_change(sender, instance, **kwargs):
     if all(list(map(lambda x: x.status=='COMPLETED', scores))):
         proposal.status = 'REVIEWED'
     else:
-        proposal.status = 'PENDING'
+        proposal.status = 'SUBMITTED'
     proposal.save()
 
 

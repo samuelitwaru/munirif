@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 # Create your views here.
@@ -12,9 +12,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from accounts.filters import UserFilter
 from accounts.forms import CompleteSignupForm
-
+from rest_framework.decorators import action
 from accounts.utils import get_user_from_bearer_token
-from core.models import Profile
+from core.models import Profile, ProfileTheme, Theme
 from utils.mails import send_html_email
 from .serializers import CompleteSignupSerializer, GroupSerializer, PasswordChangeSerializer, PasswordResetSerializer, SetPasswordSerializer, UpdateUserSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
@@ -32,6 +32,58 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects
     serializer_class = UserSerializer
     filter_backends = [UserFilter]
+
+    @action(detail=False, methods=['POST'], name='create_reviewer', url_path=r'create-reviewer')
+    def create_reviewer(self, request, *args, **kwargs):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            user.groups.add(Group.objects.get(name='reviewer'))
+            profile = user.profile
+            profile.user=user
+            profile.faculty_id=request.data['faculty']
+            profile.department_id=request.data['department']
+            profile.qualification_id=request.data['qualification']
+            profile.phone=request.data['phone']
+            profile.gender=request.data['gender']
+            profile.designation=request.data['designation']
+            profile.save()
+            theme_ids = request.data.get('themes')
+            print(theme_ids)
+            for theme_id in theme_ids:
+                ProfileTheme.objects.create(theme_id=theme_id, profile=profile)
+            # profile.themes.add(Theme.objects.get(name='reviewer'))
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['PUT'], name='update_reviewer', url_path=r'update-reviewer')
+    def update_reviewer(self, request, pk, *args, **kwargs):
+        user = get_object_or_404(User, id=pk)
+        
+        user.username = request.data['email']
+        user.email = request.data['email']
+        user.first_name = request.data['first_name']
+        user.last_name = request.data['last_name']
+        user.is_active = request.data['is_active']
+        user.save()
+        profile = user.profile
+        profile.faculty_id=request.data['faculty']
+        profile.department_id=request.data['department']
+        profile.qualification_id=request.data['qualification']
+        profile.phone=request.data['phone']
+        profile.gender=request.data['gender']
+        profile.designation=request.data['designation']
+        profile.save()
+
+        theme_ids = request.data.get('themes')
+        ProfileTheme.objects.filter(profile=profile).exclude(theme_id__in=theme_ids).delete()
+        for theme_id in theme_ids:
+            if not ProfileTheme.objects.filter(theme_id=theme_id, profile=profile):
+                ProfileTheme.objects.create(theme_id=theme_id, profile=profile)
+
+        data = UserSerializer(user).data
+        return Response(data, status=status.HTTP_200_OK)
+        
 
 class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()

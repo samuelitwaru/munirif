@@ -9,6 +9,7 @@ from munirif import router
 router.register(r'calls', CallViewSet)
 router.register(r'reporting-dates', ReportingDateViewSet)
 router.register(r'themes', ThemeViewSet)
+router.register(r'profile-themes', ProfileThemeViewSet)
 router.register(r'sections', SectionViewSet)
 router.register(r'attachments', AttachmentViewSet)
 router.register(r'users', UserViewSet)

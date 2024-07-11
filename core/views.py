@@ -93,6 +93,13 @@ class TeamViewSet(viewsets.ModelViewSet):
     filterset_fields = "__all__"
 
 
+class ProfileThemeViewSet(viewsets.ModelViewSet):
+    queryset = ProfileTheme.objects.all()
+    serializer_class = ProfileThemeSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = "__all__"
+    
+
 class ThemeViewSet(viewsets.ModelViewSet):
     queryset = Theme.objects.all()
     serializer_class = ThemeSerializer

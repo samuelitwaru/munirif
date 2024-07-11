@@ -103,8 +103,16 @@ class FacultySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ProfileThemeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileTheme
+        fields = '__all__'
+
 class ProfileSerializer(serializers.ModelSerializer):
-    
+    qualification_name = serializers.CharField(source='qualification.name', read_only=True)
+    faculty_name = serializers.CharField(source='faculty.name', read_only=True)
+    department_name = serializers.CharField(source='department.name', read_only=True)
+    themes = ProfileThemeSerializer(many=True,read_only=True)
     class Meta:
         model = Profile
         fields = '__all__'

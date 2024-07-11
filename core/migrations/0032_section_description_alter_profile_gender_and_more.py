@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='proposal',
             name='status',
-            field=models.CharField(choices=[('EDITING', 'EDITING'), ('PENDING', 'PENDING'), ('REVIEWING', 'REVIEWING'), ('REVIEWED', 'REVIEWED'), ('SELECTED', 'SELECTED')], default='EDITING', max_length=64),
+            field=models.CharField(choices=[('EDITING', 'EDITING'), ('SUBMITTED', 'SUBMITTED'), ('REVIEWING', 'REVIEWING'), ('REVIEWED', 'REVIEWED'), ('SELECTED', 'SELECTED')], default='EDITING', max_length=64),
         ),
         migrations.AlterField(
             model_name='score',
