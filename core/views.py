@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 class ProposalViewSet(viewsets.ModelViewSet):
-    queryset = Proposal.objects.all()
+    queryset = Proposal.objects.order_by('created_at').all()
     serializer_class = ProposalSerializer
     search_fields = ['title']
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, ProposalFilter]
