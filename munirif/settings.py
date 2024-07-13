@@ -201,3 +201,6 @@ if STAGING:
     CLIENT_ADDRESS = 'https://muni-rif.web.app'
 else:
     CLIENT_ADDRESS = 'http://127.0.0.1:9000'
+
+CLIENT_ADDRESS = 'https://muni-rif.web.app'
+
