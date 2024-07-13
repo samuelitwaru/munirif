@@ -104,6 +104,7 @@ class FacultySerializer(serializers.ModelSerializer):
 
 
 class ProfileThemeSerializer(serializers.ModelSerializer):
+    theme_title = serializers.CharField(source='theme.title')
     class Meta:
         model = ProfileTheme
         fields = '__all__'
