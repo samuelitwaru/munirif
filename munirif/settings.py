@@ -109,7 +109,7 @@ DATABASES = {
     'default': MYSQL_SETTINGS if DEBUG else SQLITE_SETTINGS
 }
 
-print(MYSQL_SETTINGS if DEBUG else SQLITE_SETTINGS)
+
 
 
 # Password validation
@@ -171,7 +171,7 @@ if STAGING:
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 
 # EMAIL_HOST = config('EMAIL_HOST', default='')

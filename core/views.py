@@ -154,6 +154,7 @@ class ScoreViewSet(viewsets.ModelViewSet):
     filterset_fields = ['proposal', 'status', 'user']
     
     def create(self, request, *args, **kwargs):
+        print('>>>>>>', request.data)
         user = request.data['user']
         email = request.data['email']
         proposal = request.data['proposal']

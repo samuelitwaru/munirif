@@ -5,9 +5,8 @@ from django.dispatch import receiver
 import os
 from django.db.models.signals import pre_save, post_save, post_delete, pre_delete
 from django.dispatch import receiver
-from datetime import timedelta
+from datetime import timedelta, date
 from django.utils import timezone
-
 
 STATUS_CHOICES = [
     ('EDITING', 'EDITING'),
@@ -116,7 +115,8 @@ class Proposal(TimeStampedModel):
     detailed_budget = models.TextField(null=True, blank=True)
     workplan = models.TextField(null=True, blank=True)
     team_members = models.ManyToManyField(User, related_name='team_proposals', blank=True)
-
+    is_selected = models.BooleanField(default=False)
+    
     def __str__(self):
         return self.title
     
@@ -257,6 +257,7 @@ def on_score_status_change(sender, instance, **kwargs):
         proposal.status = 'REVIEWED'
     else:
         proposal.status = 'SUBMITTED'
+        proposal.submission_date = date.today()
     proposal.save()
 
 
