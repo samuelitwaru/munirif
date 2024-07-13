@@ -25,6 +25,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, ProposalFilter]
     filterset_fields = '__all__'
    
+    @action(detail=False, methods=['GET'], name='count', url_path=r'count')
+    def count(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        count = queryset.count()
+        return Response({'count': count})
     
     @action(detail=True, methods=['GET'], name='team', url_path=r'team')
     def team(self, request, pk, *args, **kwargs):
@@ -154,7 +159,6 @@ class ScoreViewSet(viewsets.ModelViewSet):
     filterset_fields = ['proposal', 'status', 'user']
     
     def create(self, request, *args, **kwargs):
-        print('>>>>>>', request.data)
         user = request.data['user']
         email = request.data['email']
         proposal = request.data['proposal']
