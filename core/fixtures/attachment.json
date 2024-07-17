@@ -3,21 +3,24 @@
         "model": "core.attachment",
         "pk": 1,
         "fields": {
-            "title": "Appointment Letter (PI)"
+            "title": "Appointment Letter (PI)",
+            "is_required": true
         }
     },
     {
         "model": "core.attachment",
         "pk": 2,
         "fields": {
-            "title": "Curriculum Vitae (PI)"
+            "title": "Curriculum Vitae (PI)",
+            "is_required": true
         }
     },
     {
         "model": "core.attachment",
         "pk": 3,
         "fields": {
-            "title": "Budget"
+            "title": "Budget",
+            "is_required": true
         }
     },
 
@@ -25,15 +28,16 @@
         "model": "core.attachment",
         "pk": 4,
         "fields": {
-            "title": "Letters of Support"
+            "title": "Letters of Support",
+            "is_required": true
         }
     },
     {
         "model": "core.attachment",
         "pk": 5,
         "fields": {
-            "title": "Additional Letters of Support"
-            
+            "title": "Additional Letters of Support",
+            "is_required": false
         }
     }
   ]

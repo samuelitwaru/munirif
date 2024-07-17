@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from accounts.serializers import UserSerializer
 from core.filters import ProposalFilter, ScoreFilter
 # from core.tasks import delete_expired_invitations
-from utils.helpers import get_host_name, write_xlsx_file
+from utils.helpers import get_host_name, write_proposal_pdf, write_xlsx_file
 from datetime import datetime, timedelta
 from django.utils import timezone
 from utils.mails import send_html_email
@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 class ProposalViewSet(viewsets.ModelViewSet):
-    queryset = Proposal.objects.order_by('created_at').all()
+    queryset = Proposal.objects.order_by('-submission_date').all()
     serializer_class = ProposalSerializer
     search_fields = ['title']
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, ProposalFilter]
@@ -82,6 +82,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
         foot = ['TOTAL'] + [f'=sum({chr(num)}2:{chr(num)}12)' for num in range(ord('b'), ord('b')+len(scores))]
         rows.append(foot)
         file = write_xlsx_file(f'score-sheet-{proposal.id}.xlsx', columns, rows)
+        host = get_host_name(request)
+        return Response({'file_url':f'{host}{file}'}) 
+    
+    @action(detail=True, methods=['GET'], name='download_pdf', url_path=r'pdf/download')
+    def download_pdf(self, request, pk, *args, **kwargs):
+        proposal = Proposal.objects.get(id=pk)
+        file = write_proposal_pdf(f'{proposal.title}.pdf', proposal)
         host = get_host_name(request)
         return Response({'file_url':f'{host}{file}'}) 
 

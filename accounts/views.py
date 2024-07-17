@@ -49,17 +49,28 @@ class UserViewSet(viewsets.ModelViewSet):
             profile.designation=request.data['designation']
             profile.save()
             theme_ids = request.data.get('themes')
-            print(theme_ids)
+            
             for theme_id in theme_ids:
                 ProfileTheme.objects.create(theme_id=theme_id, profile=profile)
-            # profile.themes.add(Theme.objects.get(name='reviewer'))
+            
+            token, created = Token.objects.get_or_create(user=user)
+            context = {
+            'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS
+            }
+            send_html_email(
+                request,
+                'INVITATION TO MUNI RIF SYSTEM AS A REVIEWER',
+                [user.username],
+                'emails/reviewer-invite.html',
+                context
+            )
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=True, methods=['PUT'], name='update_reviewer', url_path=r'update-reviewer')
     def update_reviewer(self, request, pk, *args, **kwargs):
         user = get_object_or_404(User, id=pk)
-        
         user.username = request.data['email']
         user.email = request.data['email']
         user.first_name = request.data['first_name']

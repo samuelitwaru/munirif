@@ -84,6 +84,7 @@ class Attachment(models.Model):
     title = models.CharField(max_length=128)
     description = models.TextField(blank=True)
     max_size = models.IntegerField(default=5000)
+    is_required = models.BooleanField(default=True)
 
     def __str__(self):
         return self.title
@@ -120,7 +121,19 @@ class Proposal(TimeStampedModel):
     def __str__(self):
         return self.title
     
-
+    @property
+    def total_score(self):
+        total = 0
+        for score in self.score_set.all():
+            total += score.total_score
+        return total
+    
+    @property
+    def average_score(self):
+        count = self.score_set.count()
+        if count:
+            return self.total_score/count
+        return 0
 class Budget(TimeStampedModel):
     item = models.CharField(max_length=128)
     quantity = models.PositiveIntegerField()

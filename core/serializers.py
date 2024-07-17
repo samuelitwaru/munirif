@@ -47,6 +47,9 @@ class ProposalSerializer(serializers.ModelSerializer):
     theme_title = serializers.CharField(source='theme.title', read_only=True)
     user__first_name = serializers.CharField(source='user.first_name', read_only=True)
     user__last_name = serializers.CharField(source='user.last_name', read_only=True)
+    total_score = serializers.IntegerField(read_only=True)
+    average_score = serializers.IntegerField(read_only=True)
+    
     class Meta:
         model = Proposal
         fields = '__all__'
