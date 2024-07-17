@@ -29,9 +29,17 @@ from templated_email import send_templated_mail
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects
+    queryset = User.objects.order_by('-date_joined')
     serializer_class = UserSerializer
     filter_backends = [UserFilter]
+
+    @action(detail=False, methods=['GET'], name='get_user_by_token', url_path=r'get-user-by-token/(?P<token>[^/.]+)')
+    def get_user_by_token(self, request, token, *args, **kwargs):
+        token = get_object_or_404(Token, key=token)
+        user = token.user
+        data = UserSerializer(user).data
+        return Response(data, status=status.HTTP_201_CREATED)
+
 
     @action(detail=False, methods=['POST'], name='create_reviewer', url_path=r'create-reviewer')
     def create_reviewer(self, request, *args, **kwargs):
