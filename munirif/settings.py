@@ -109,6 +109,8 @@ DATABASES = {
     'default': MYSQL_SETTINGS if DEBUG else SQLITE_SETTINGS
 }
 
+print(DATABASES)
+
 
 
 
