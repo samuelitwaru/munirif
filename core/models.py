@@ -99,7 +99,7 @@ class Theme(TimeStampedModel):
 
 class Proposal(TimeStampedModel):
     title = models.CharField(max_length=128)
-    theme = models.ForeignKey(Theme, null=True, on_delete=models.SET_NULL, blank=True)
+    theme = models.ForeignKey(Theme, on_delete=models.CASCADE)
     status = models.CharField(max_length=64, default='EDITING', choices=STATUS_CHOICES) # editing, submitted, scoring, reviewed
     submission_date = models.DateField(null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
