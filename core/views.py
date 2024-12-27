@@ -125,6 +125,9 @@ class CallViewSet(viewsets.ModelViewSet):
         call = get_object_or_404(Call, id=pk)
         call.is_active = True
         call.save()
+
+        Call.objects.exclude(id=pk).update(is_active=False)
+
         entity = Entity.objects.first()
         if entity: 
             entity.current_call = call
