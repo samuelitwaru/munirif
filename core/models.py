@@ -55,6 +55,8 @@ class Call(TimeStampedModel):
     submission_date = models.DateField(null=True)
     review_date = models.DateField(null=True)
     selection_date = models.DateField(null=True)
+    description = models.TextField(blank=True, null=True)
+    entity = models.ForeignKey('Entity', null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.title
@@ -316,4 +318,4 @@ def delete_file(sender, instance, **kwargs):
 
 class Entity(models.Model):
     name = models.CharField(max_length=128)
-    current_call = models.ForeignKey(Call, null=True, blank=True, on_delete=models.SET_NULL)
+    current_call = models.ForeignKey(Call, null=True, blank=True, on_delete=models.SET_NULL, related_name='current_call')
