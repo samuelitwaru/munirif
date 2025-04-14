@@ -270,7 +270,7 @@ def reset_password(request):
             request,
             'PASSWORD RESET',
             [user.username],
-            'emails/password-reset.html',
+            'emails/password-reset-1.html',
             context
             )
         

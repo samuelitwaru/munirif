@@ -1,24 +1,31 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ subject }}</title>
-</head>
-<body>
-    <p>Hello {{user.first_name}} {{user.last_name}},</p>
-    <p>You have been invited to the MuniRIF MS as a reviewer.</p>
-    <p>To accept this invitation, please follow the link below:</p>
-    <a href='{{client_address}}/index/account/{{token}}/complete-signup'>Accept Invitation</a>
+{% extends 'emails/base.html' %}
 
-    <p>{{client_address}}/index/account/{{token}}/complete-signup</p>
-    
-    <p>If the above link doesn't work, copy and paste the following URL into your browser's address bar:</p>
-    
-    <p>
-        Please note that this link is valid for a limited time and can only be used once. For more information, please contact our support team on this email.
-    </p>
-    <div>
-    <p>Best regards,</p>
-    <p>The MuniRIF MS Team</p>
+{% block content %}
+<div class="email-container">
+    <div class="header">
+        <h1>REVIEWER INVITATION</h1>
     </div>
-</body>
-</html>
+
+    <div class="content" style="padding: 20px;">
+        <h4>Hello {{user.first_name}} {{user.last_name}},</h4>
+        <p>You have been invited to the MuniRIF MS as a reviewer.</p>
+        <p>To accept this invitation, please follow the link below:</p>
+
+        <p style="text-align: center;">
+            <a class="button" href='{{client_address}}/index/account/{{token}}/complete-signup'>Accept Invitation</a>
+        </p>
+
+        <p>{{client_address}}/index/account/{{token}}/complete-signup</p>
+        
+        <p>If the above link doesn't work, copy and paste the following URL into your browser's address bar:</p>
+        
+        <p>
+            Please note that this link is valid for a limited time and can only be used once. For more information, please contact our support team on this email.
+        </p>
+        <div>
+            <p>Best regards,</p>
+            <p>The MuniRIF MS Team</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
