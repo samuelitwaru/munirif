@@ -54,6 +54,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -151,9 +152,16 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+print(STATICFILES_DIRS)
+print(STATIC_ROOT)
+print(STATIC_URL)
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.path.dirname(BASE_DIR)) / 'media/'
+
 
 
 # Default primary key field type
@@ -196,8 +204,6 @@ REST_FRAMEWORK = {
 
 PROPOSAL_FILES_DIR = MEDIA_ROOT / 'proposal_files'
 PROPOSAL_FILES_URL = MEDIA_URL + 'proposal_files'
-
-print(PROPOSAL_FILES_URL)
 
 if STAGING:
     CLIENT_ADDRESS = 'https://muni-rif.web.app'
