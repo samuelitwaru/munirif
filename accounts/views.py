@@ -1,3 +1,4 @@
+import threading
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
@@ -65,16 +66,44 @@ class UserViewSet(viewsets.ModelViewSet):
             context = {
             'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS
             }
-            send_html_email(
-                request,
+
+            threading.Thread(target=send_html_email, args=(request,
                 'INVITATION TO MUNI RIF SYSTEM AS A REVIEWER',
                 [user.username],
-                'emails/reviewer-invite.html',
-                context
-            )
+                'emails/reviewer-invite.html',context)).start()
+
+            # send_html_email(
+            #     request,
+            #     'INVITATION TO MUNI RIF SYSTEM AS A REVIEWER',
+            #     [user.username],
+            #     'emails/reviewer-invite.html',
+            #     context
+            # )
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+    @action(detail=False, methods=['POST'], name='send_invite', url_path=r'send-invite')
+    def send_invite(self, request, *args, **kwargs):
+        serializer = PasswordResetSerializer(data=request.data)
+        if serializer.is_valid():
+            email = request.data['email']
+            user = User.objects.filter(username=email).first()                
+            token, created = Token.objects.get_or_create(user=user)
+            context = {
+                'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS
+            }
+
+            threading.Thread(target=send_html_email, args=(request,
+                'INVITATION TO MUNI RIF SYSTEM',
+                [user.username],
+                'emails/general-invite.html',context)).start()
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
     
     @action(detail=True, methods=['PUT'], name='update_reviewer', url_path=r'update-reviewer')
     def update_reviewer(self, request, pk, *args, **kwargs):

@@ -1,4 +1,5 @@
 # views.py
+import threading
 from rest_framework import viewsets, filters
 from django.shortcuts import get_object_or_404
 from accounts.serializers import UserSerializer
@@ -186,14 +187,22 @@ class ScoreViewSet(viewsets.ModelViewSet):
         template = 'emails/review-invitation.html'
         if not user.is_active or not user.profile: template = 'emails/new-user-review-invitation.html'
         
-        # send reviewership email
-        send_html_email(
+        threading.Thread(target=send_html_email, args=(
             request,
             'PROPOSAL REVIEW INVITATION',
             [email],
             template,
             context
-        )
+        )).start()
+
+        # send reviewership email
+        # send_html_email(
+        #     request,
+        #     'PROPOSAL REVIEW INVITATION',
+        #     [email],
+        #     template,
+        #     context
+        # )
         return super().create(request, *args, **kwargs)
 
     @action(detail=True, methods=['GET'], name='validate', url_path=r'validate')

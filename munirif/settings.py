@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv_path = os.path.join(BASE_DIR, '.env')
 load_dotenv(dotenv_path)
 
-
+print(dotenv_path)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -30,10 +30,12 @@ SECRET_KEY = 'django-insecure-)hfk+ha#s%whs^o6)7u7!b9p8mdj4_@q8m%3!kk2f*i2h=v@1&
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == 'True'
+DEBUG = True
 STAGING = os.getenv('STAGING') == 'True'
 
 ALLOWED_HOSTS = ['*']
 
+print(os.getenv('DEBUG'))
 
 # Application definition
 
@@ -98,11 +100,11 @@ SQLITE_SETTINGS = {
 }
 MYSQL_SETTINGS = {
     'ENGINE': 'django.db.backends.mysql',
-    'NAME': os.getenv('DB_NAME'),
-    'USER': os.getenv('DB_USER'),
-    'PASSWORD': os.getenv('DB_PASSWORD'),
-    'HOST': os.getenv('DB_HOST'), 
-    'PORT': os.getenv('DB_PORT'),
+    'NAME': os.getenv('DB_NAME') or 'munirif',
+    'USER': os.getenv('DB_USER') or 'root',
+    'PASSWORD': os.getenv('DB_PASSWORD') or 'bratz123',
+    'HOST': os.getenv('DB_HOST') or '192.168.1.140', 
+    'PORT': os.getenv('DB_PORT') or '3306',
 }
 
 
