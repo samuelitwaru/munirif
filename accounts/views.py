@@ -67,18 +67,18 @@ class UserViewSet(viewsets.ModelViewSet):
             'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS
             }
 
-            threading.Thread(target=send_html_email, args=(request,
-                'INVITATION TO MUNI RIF SYSTEM AS A REVIEWER',
-                [user.username],
-                'emails/reviewer-invite.html',context)).start()
-
-            # send_html_email(
-            #     request,
+            # threading.Thread(target=send_html_email, args=(request,
             #     'INVITATION TO MUNI RIF SYSTEM AS A REVIEWER',
             #     [user.username],
-            #     'emails/reviewer-invite.html',
-            #     context
-            # )
+            #     'emails/reviewer-invite.html',context)).start()
+
+            send_html_email(
+                request,
+                'INVITATION TO MUNI RIF SYSTEM AS A REVIEWER',
+                [user.username],
+                'emails/reviewer-invite.html',
+                context
+            )
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -12,7 +12,7 @@ def send_html_email(request, subject, recipient_list, html_template, context):
 
     # Send the email
     print('sending')
-    send_mail(
+    res = send_mail(
         subject,
         plain_message,
         'samuelitwaru@gmail.com',  # Sender's email
@@ -20,3 +20,4 @@ def send_html_email(request, subject, recipient_list, html_template, context):
         html_message=html_message,  # HTML content of the email
         fail_silently=False,
     )
+    print(res)
