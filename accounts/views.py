@@ -154,6 +154,18 @@ class SignupView(APIView):
             profile.gender=request.data['gender']
             profile.designation=request.data['designation']
             profile.save()
+            
+            token, created = Token.objects.get_or_create(user=user)
+            context = {
+                'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS
+            }
+
+            threading.Thread(target=send_html_email, args=(request,
+                'INVITATION TO MUNI RIF SYSTEM',
+                [user.username],
+                'emails/general-invite.html',context)).start()
+
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -172,14 +184,14 @@ class CompleteSignupView(APIView):
             user.is_active = True
             user.set_password(request.data['password'])
             user.save()
-            user.groups.add(Group.objects.get(name='reviewer'))
-            profile = user.profile
-            profile.faculty_id=request.data['faculty']
-            profile.department_id=request.data['department']
-            profile.qualification_id=request.data['qualification']
-            profile.phone=request.data['phone']
-            profile.gender=request.data['gender']
-            profile.designation=request.data['designation']
+            # user.groups.add(Group.objects.get(name='reviewer'))
+            # profile = user.profile
+            # profile.faculty_id=request.data['faculty']
+            # profile.department_id=request.data['department']
+            # profile.qualification_id=request.data['qualification']
+            # profile.phone=request.data['phone']
+            # profile.gender=request.data['gender']
+            # profile.designation=request.data['designation']
 
             login(request, user)
 

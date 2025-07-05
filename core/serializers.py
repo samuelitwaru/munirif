@@ -127,3 +127,7 @@ class EntitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Entity
         fields = '__all__'
+
+
+class ExcelUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()

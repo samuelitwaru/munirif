@@ -30,7 +30,6 @@ SECRET_KEY = 'django-insecure-)hfk+ha#s%whs^o6)7u7!b9p8mdj4_@q8m%3!kk2f*i2h=v@1&
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == 'True'
-DEBUG = True
 STAGING = os.getenv('STAGING') == 'True'
 
 ALLOWED_HOSTS = ['*']
@@ -48,7 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    # 'background_task',
+    'background_task',
     'accounts',
     'core',
     'corsheaders',
@@ -103,7 +102,7 @@ MYSQL_SETTINGS = {
     'NAME': os.getenv('DB_NAME') or 'munirif',
     'USER': os.getenv('DB_USER') or 'root',
     'PASSWORD': os.getenv('DB_PASSWORD') or 'bratz123',
-    'HOST': os.getenv('DB_HOST') or '192.168.1.140', 
+    'HOST': os.getenv('DB_HOST') or '127.0.0.1', 
     'PORT': os.getenv('DB_PORT') or '3306',
 }
 

@@ -70,7 +70,6 @@ def write_xlsx_file(file_name, columns, data):
 
 
 def write_proposal_pdf(file_name, proposal):
-    downloads_folder = '../media/downloads'
     downloads_folder = settings.MEDIA_ROOT / 'downloads'
     downloads_url = '/media/downloads'
     file_path = f'{downloads_folder}/{file_name}'

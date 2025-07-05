@@ -1,0 +1,50 @@
+[   
+    {
+        "model": "core.theme",
+        "pk": 1,
+        "fields": {
+            "title": "Transforming the agricultural sector to drive development",
+            "call": null
+        }
+    },
+    {
+        "model": "core.theme",
+        "pk": 2,
+        "fields": {
+            "title": "Harnessing tourism, wildlife and heritage to drive development",
+            "call": null
+        }
+    },
+    {
+        "model": "core.theme",
+        "pk": 3,
+        "fields": {
+            "title": "Harnessing the social sector, culture and arts to drive development",
+            "call": null
+        }
+    },
+    {
+        "model": "core.theme",
+        "pk": 4,
+        "fields": {
+            "title": "Water, sanitation and the environment: A pre-requisite to sustainable",
+            "call": null
+        }
+    },
+    {
+        "model": "core.theme",
+        "pk": 5,
+        "fields": {
+            "title": "Re-imagining Education to unlock capacity for economic development",
+            "call": null
+        }
+    },
+    {
+        "model": "core.theme",
+        "pk": 7,
+        "fields": {
+            "title": "Theme",
+            "call": null
+        }
+    }
+]

@@ -1,10 +1,12 @@
 # views.py
 import threading
+import openpyxl
 from rest_framework import viewsets, filters
 from django.shortcuts import get_object_or_404
 from accounts.serializers import UserSerializer
 from core.filters import ProposalFilter, ScoreFilter
 # from core.tasks import delete_expired_invitations
+from core.utils import generate_excel_from_schema
 from utils.helpers import get_host_name, write_proposal_pdf, write_xlsx_file
 from datetime import datetime, timedelta
 from django.utils import timezone
@@ -92,6 +94,73 @@ class ProposalViewSet(viewsets.ModelViewSet):
         file = write_proposal_pdf(f'{proposal.title}.pdf', proposal)
         host = get_host_name(request)
         return Response({'file_url':f'{host}{file}'}) 
+    
+    @action(detail=False, methods=['GET'], name='download_bulk_upload_sheet', url_path=r'bulk-upload-sheet/download')
+    def download_bulk_upload_sheet(self, request, *args, **kwargs):
+        schema =  [
+            {
+                "name": "Title",
+                "validation": {"type": "textLength", "operator": "lessThanOrEqual", "formula1": 15},
+            },
+            {
+                "name": "Theme",
+                "validation": {"type": "list", "formula1": f'"{','.join([theme.title for theme in Theme.objects.all()])}"', "allow_blank": False},
+            },
+            {
+                "name": "Status",
+                "validation": {"type": "list", "formula1": '"PENDING,SELECTED"', "allow_blank": False},
+            },
+            {
+                "name": "PI",
+                "validation": {"type": "list", "formula1": f'"{','.join([user.username for user in User.objects.filter(groups__name='reviewer')])}"', "allow_blank": False},
+            },
+            {
+                "name": "Call",
+                "validation": {"type": "list", "formula1": f'"{','.join([call.title for call in Call.objects.all()])}"', "allow_blank": True},
+            }
+        ]
+        file = generate_excel_from_schema(schema)
+        host = get_host_name(request)
+        return Response({'file_url':f'{host}{file}'})
+    
+    @action(detail=False, methods=['POST'], name='upload_bulk', url_path=r'upload-bulk')
+    def upload_bulk(self, request, *args, **kwargs):
+        print('request.data', request.data)
+        serializer = ExcelUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            excel_file = serializer.validated_data['file']
+            print('>>>>>>', excel_file)
+            wb = openpyxl.load_workbook(excel_file)
+            sheet = wb.active
+            print(sheet.iter_rows(min_row=2, values_only=True))
+            created = 0
+            for idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True)):  # skip header row
+                print('>>>', row)
+                # Assuming columns: First Name, Last Name, Email
+                title, theme_title, p_status, pi_email, call_title = row
+                if not title:
+                    continue  # skip rows without required data
+                
+                call = Call.objects.filter(title=call_title).first()
+                theme = Theme.objects.filter(title=theme_title).first()
+                user = User.objects.filter(username=pi_email).first()
+
+
+                # Save to database (adjust field names as needed)
+                Proposal.objects.create(
+                    title=title,
+                    call=call,
+                    user=user,
+                    theme=theme,
+                    status=p_status
+                )
+                created += 1
+
+            return Response({"message": f"{created} records imported"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 class BudgetViewSet(viewsets.ModelViewSet):
     queryset = Budget.objects.all()
