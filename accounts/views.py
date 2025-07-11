@@ -1,4 +1,6 @@
+import json
 import threading
+from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
@@ -366,3 +368,15 @@ def complete_signup(request):
         'token': token
     }
     return render(request, 'account/complete-signup.html', context)
+
+
+def send_email_notifications(request):
+    threading.Thread(target=send_html_email, args=(request,
+                'INVITATION TO MUNI RIF SYSTEM AS A REVIEWER',
+                [],
+                'emails/notification.html', {})).start()
+    
+    data = json.dumps({
+        "message": "This is a test notification."
+    })
+    return HttpResponse(data, content_type='application/json', status=200)

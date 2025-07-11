@@ -104,7 +104,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             },
             {
                 "name": "Theme",
-                "validation": {"type": "list", "formula1": f'"{','.join([theme.title for theme in Theme.objects.all()])}"', "allow_blank": False},
+                "validation": {"type": "list", "formula1": f'"{",".join([theme.title for theme in Theme.objects.all()])}"', "allow_blank": False},
             },
             {
                 "name": "Status",
@@ -112,11 +112,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
             },
             {
                 "name": "PI",
-                "validation": {"type": "list", "formula1": f'"{','.join([user.username for user in User.objects.filter(groups__name='reviewer')])}"', "allow_blank": False},
+                "validation": {"type": "list", "formula1": f'"{",".join([user.username for user in User.objects.filter(groups__name="reviewer")])}"', "allow_blank": False},
             },
             {
                 "name": "Call",
-                "validation": {"type": "list", "formula1": f'"{','.join([call.title for call in Call.objects.all()])}"', "allow_blank": True},
+                "validation": {"type": "list", "formula1": f'"{",".join([call.title for call in Call.objects.all()])}"', "allow_blank": True},
             }
         ]
         file = generate_excel_from_schema(schema)
@@ -129,7 +129,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
         serializer = ExcelUploadSerializer(data=request.data)
         if serializer.is_valid():
             excel_file = serializer.validated_data['file']
-            print('>>>>>>', excel_file)
             wb = openpyxl.load_workbook(excel_file)
             sheet = wb.active
             print(sheet.iter_rows(min_row=2, values_only=True))
@@ -293,5 +292,3 @@ class EntityViewSet(viewsets.ModelViewSet):
     queryset = Entity.objects.all()
     serializer_class = EntitySerializer
 
-
-# delete_expired_invitations(schedule=60)

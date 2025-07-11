@@ -1,3 +1,4 @@
+import threading
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
@@ -7,6 +8,9 @@ from django.db.models.signals import pre_save, post_save, post_delete, pre_delet
 from django.dispatch import receiver
 from datetime import timedelta, date
 from django.utils import timezone
+from middlewares.request_middleware import get_current_request
+
+from utils.mails import send_html_email
 
 STATUS_CHOICES = [
     ('EDITING', 'EDITING'),
@@ -315,6 +319,42 @@ def delete_file(sender, instance, **kwargs):
     if os.path.isfile(file_path):
         os.remove(file_path)
 
+@receiver(pre_save, sender=Proposal)
+def send_proposal_submitted_email(sender, instance, **kwargs):
+    try:
+        # Fetch the previous version from DB
+        old_instance = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        return
+    
+    send_mail = False
+    
+    if old_instance.status == 'EDITING' and instance.status == 'SUBMITTED':
+        request = get_current_request()
+        user = User.objects.filter(groups__name='GRANTS_OFFICER').first()
+        if not user:
+            return
+        context = {
+            'user': user, 'proposal':instance, 'client_address': settings.CLIENT_ADDRESS
+        }
+        subject = 'PROPOSAL SUBMITTED'
+        html_template = 'emails/proposal-submitted.html'
+        send_mail = True
+
+        
+    elif old_instance.status == 'REVIEWED' and instance.status == 'SELECTED':
+        request = get_current_request()
+        context = {
+            'proposal': instance, 'client_address': settings.CLIENT_ADDRESS
+        }
+        subject = 'PROPOSAL SELECTED'
+        html_template = 'emails/proposal-selected.html'
+        send_mail = True
+    if send_mail:
+        threading.Thread(target=send_html_email, args=(request,
+                subject,
+                ['samuelitwaru@gmail.com'],
+                html_template,context)).start()    
 
 class Entity(models.Model):
     name = models.CharField(max_length=128)

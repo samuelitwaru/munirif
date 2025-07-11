@@ -20,7 +20,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv_path = os.path.join(BASE_DIR, '.env')
 load_dotenv(dotenv_path)
 
-print(dotenv_path)
+print('BASE_DIR:', dotenv_path)
+
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -55,6 +57,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'middlewares.request_middleware.RequestMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -99,9 +102,9 @@ SQLITE_SETTINGS = {
 }
 MYSQL_SETTINGS = {
     'ENGINE': 'django.db.backends.mysql',
-    'NAME': os.getenv('DB_NAME') or 'munirif',
-    'USER': os.getenv('DB_USER') or 'root',
-    'PASSWORD': os.getenv('DB_PASSWORD') or 'bratz123',
+    'NAME': os.getenv('DB_NAME'),
+    'USER': os.getenv('DB_USER'),
+    'PASSWORD': os.getenv('DB_PASSWORD'),
     'HOST': os.getenv('DB_HOST') or '127.0.0.1', 
     'PORT': os.getenv('DB_PORT') or '3306',
 }
@@ -110,8 +113,6 @@ MYSQL_SETTINGS = {
 DATABASES = {
     'default': MYSQL_SETTINGS if DEBUG else SQLITE_SETTINGS
 }
-
-print(DATABASES)
 
 
 
@@ -156,10 +157,6 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
-print(STATICFILES_DIRS)
-print(STATIC_ROOT)
-print(STATIC_URL)
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.path.dirname(BASE_DIR)) / 'media/'
 
@@ -175,6 +172,12 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:9000',
     'http://192.168.0.102:9000',
     'https://muni-rif.web.app',
+    'https://munirif.ecdouganda.org',
+    'https://gms.muni.ac.ug',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://munirif.vps.webdock.cloud",
 ]
 
 if STAGING:
@@ -185,19 +188,20 @@ else:
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 
-# EMAIL_HOST = config('EMAIL_HOST', default='')
-# EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-# EMAIL_USE_TLS = True  # Use TLS for secure communication
-# # EMAIL_USE_SSL = True  # Do not use SSL
-# EMAIL_USER = config('EMAIL_HOST_USER', default='')
-# EMAIL_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-
-
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'samit.notification@gmail.com'
-EMAIL_HOST_PASSWORD = 'disnhnwrjriwltrm'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+print('EMAIL_HOST:', EMAIL_HOST)
+print('EMAIL_PORT:', EMAIL_PORT)
+print('EMAIL_USE_TLS:', EMAIL_USE_TLS)
+print('EMAIL_HOST_USER:', EMAIL_HOST_USER)
+print('EMAIL_HOST_PASSWORD:', EMAIL_HOST_PASSWORD)
+
+
+
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
@@ -207,9 +211,9 @@ PROPOSAL_FILES_DIR = MEDIA_ROOT / 'proposal_files'
 PROPOSAL_FILES_URL = MEDIA_URL + 'proposal_files'
 
 if STAGING:
-    CLIENT_ADDRESS = 'https://muni-rif.web.app'
+    CLIENT_ADDRESS = 'https://gms.muniac.ug'
 else:
     CLIENT_ADDRESS = 'http://127.0.0.1:9000'
 
-CLIENT_ADDRESS = 'https://muni-rif.web.app'
+CLIENT_ADDRESS = 'https://gms.muni.ac.ug'
 
