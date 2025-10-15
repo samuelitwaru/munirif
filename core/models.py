@@ -68,11 +68,10 @@ class Call(TimeStampedModel):
 class ReportingDate(TimeStampedModel):
     title = models.CharField(max_length=128)
     date = models.DateField()
-    call = models.ForeignKey(Call, on_delete=models.CASCADE)
+    call = models.ForeignKey(Call, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self) -> str:
         return f'{self.title} {self.call}'
-
 
 class Section(models.Model):
      ref = models.CharField(max_length=128)
@@ -140,6 +139,7 @@ class Proposal(TimeStampedModel):
         if count:
             return self.total_score/count
         return 0
+
 class Budget(TimeStampedModel):
     item = models.CharField(max_length=128)
     quantity = models.PositiveIntegerField()
@@ -173,6 +173,7 @@ class Score(TimeStampedModel):
     summary_budget = models.IntegerField(null=True)
     detailed_budget = models.IntegerField(null=True)
     workplan = models.IntegerField(null=True)
+    attachments = models.IntegerField(null=True)
 
     problem_comment = models.TextField(null=True, blank=True)
     solution_comment = models.TextField(null=True, blank=True)
@@ -186,6 +187,7 @@ class Score(TimeStampedModel):
     summary_budget_comment = models.TextField(null=True, blank=True)
     detailed_budget_comment = models.TextField(null=True, blank=True)
     workplan_comment = models.TextField(null=True, blank=True)
+    attachments_comment = models.TextField(null=True, blank=True)
 
     strengths = models.TextField(null=True, blank=True)
     weaknesses = models.TextField(null=True, blank=True)
@@ -212,6 +214,11 @@ class Score(TimeStampedModel):
         sections = map(lambda x: x.name, Section.objects.all())
         return sum([(getattr(self, section, 0) or 0) for section in sections])
     
+    @property
+    def percentage_score(self):
+        section_max_scores = map(lambda x: x.max_score, Section.objects.all())
+        return (self.total_score / sum(section_max_scores)) * 100
+    
 class File(models.Model):
     name = models.CharField(max_length=128)
     description = models.CharField(max_length=128, null=True, blank=True)
@@ -228,6 +235,22 @@ class Report(models.Model):
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     reporting_date = models.ForeignKey(ReportingDate, on_delete=models.SET_NULL, null=True, blank=True)
 
+class Expenditure(TimeStampedModel):
+    item = models.CharField(max_length=128)
+    quantity = models.PositiveIntegerField()
+    units = models.CharField(max_length=64)
+    unit_cost = models.PositiveIntegerField()
+    date = models.DateField()
+    proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
+    remarks = models.CharField(max_length=256, null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f'{self.item} - {self.amount}'
+    
+    @property
+    def amount(self):
+        return self.quantity * self.unit_cost
+
 class Qualification(models.Model):
     name = models.CharField(max_length=64)
 
@@ -239,7 +262,6 @@ class Faculty(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class Department(models.Model):
     name = models.CharField(max_length=64)
@@ -278,7 +300,6 @@ def on_score_status_change(sender, instance, **kwargs):
         proposal.status = 'SUBMITTED'
         proposal.submission_date = date.today()
     proposal.save()
-
 
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
@@ -351,11 +372,8 @@ def send_proposal_submitted_email(sender, instance, **kwargs):
         html_template = 'emails/proposal-selected.html'
         send_mail = True
     if send_mail:
-        threading.Thread(target=send_html_email, args=(request,
-                subject,
-                ['samuelitwaru@gmail.com'],
-                html_template,context)).start()    
-
+        send_html_email(request, subject, [], html_template, context)
+        
 class Entity(models.Model):
     name = models.CharField(max_length=128)
     current_call = models.ForeignKey(Call, null=True, blank=True, on_delete=models.SET_NULL, related_name='current_call')

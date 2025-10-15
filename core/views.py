@@ -20,6 +20,10 @@ from django.conf import settings
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework import status
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from rest_framework.permissions import AllowAny
+
 
 class ProposalViewSet(viewsets.ModelViewSet):
     queryset = Proposal.objects.order_by('-submission_date').all()
@@ -27,6 +31,22 @@ class ProposalViewSet(viewsets.ModelViewSet):
     search_fields = ['title']
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, ProposalFilter]
     filterset_fields = '__all__'
+
+    def list(self, request, *args, **kwargs):
+        limit = request.query_params.get('limit')
+        page = request.query_params.get('page')
+        queryset = self.filter_queryset(self.get_queryset())
+        paginator = Paginator(queryset, limit)
+        page_obj = paginator.get_page(page)
+        serializer = self.get_serializer(page_obj.object_list, many=True)
+        return Response({
+            'results':serializer.data,
+            "page": page_obj.number,
+            "max_page": paginator.num_pages,
+            "total_items": paginator.count,
+            "has_next": page_obj.has_next(),
+            "has_previous": page_obj.has_previous(),
+        })
    
     @action(detail=False, methods=['GET'], name='count', url_path=r'count')
     def count(self, request, *args, **kwargs):
@@ -97,35 +117,46 @@ class ProposalViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['GET'], name='download_bulk_upload_sheet', url_path=r'bulk-upload-sheet/download')
     def download_bulk_upload_sheet(self, request, *args, **kwargs):
+        theme_titles = []
+        for theme in Theme.objects.all():
+            title = theme.title.replace(',','__')
+            theme_titles.append(title)
+        users = [user.username for user in User.objects.filter(groups__name="reviewer")]
+        calls = [call.title for call in Call.objects.all()]
         schema =  [
             {
                 "name": "Title",
-                "validation": {"type": "textLength", "operator": "lessThanOrEqual", "formula1": 15},
+                "validation": {"type": "textLength", "operator": "lessThanOrEqual", "formula1": 100},
             },
             {
                 "name": "Theme",
-                "validation": {"type": "list", "formula1": f'"{",".join([theme.title for theme in Theme.objects.all()])}"', "allow_blank": False},
+                "validation": {"type": "list", "formula1": f'=Sheet2!$B$1:$B${len(theme_titles)+1}', "allow_blank": False},
             },
             {
                 "name": "Status",
-                "validation": {"type": "list", "formula1": '"PENDING,SELECTED"', "allow_blank": False},
+                "validation": {"type": "list", "formula1": '=Sheet2!$A$1:$A$2', "allow_blank": False},
             },
             {
                 "name": "PI",
-                "validation": {"type": "list", "formula1": f'"{",".join([user.username for user in User.objects.filter(groups__name="reviewer")])}"', "allow_blank": False},
+                "validation": {"type": "list", "formula1": f'=Sheet2!$C$1:$C${len(users)+1}', "allow_blank": False},
             },
             {
                 "name": "Call",
-                "validation": {"type": "list", "formula1": f'"{",".join([call.title for call in Call.objects.all()])}"', "allow_blank": True},
+                "validation": {"type": "list", "formula1": f'=Sheet2!$D$1:$D${len(calls)+1}', "allow_blank": True},
             }
         ]
-        file = generate_excel_from_schema(schema)
+        list_references = {
+            "A": ['PENDING', 'SELECTED'],
+            "B": theme_titles,
+            "C": users,
+            "D": calls
+        }
+        file = generate_excel_from_schema(schema, list_references)
         host = get_host_name(request)
         return Response({'file_url':f'{host}{file}'})
     
     @action(detail=False, methods=['POST'], name='upload_bulk', url_path=r'upload-bulk')
     def upload_bulk(self, request, *args, **kwargs):
-        print('request.data', request.data)
         serializer = ExcelUploadSerializer(data=request.data)
         if serializer.is_valid():
             excel_file = serializer.validated_data['file']
@@ -134,11 +165,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(sheet.iter_rows(min_row=2, values_only=True))
             created = 0
             for idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True)):  # skip header row
-                print('>>>', row)
                 # Assuming columns: First Name, Last Name, Email
                 title, theme_title, p_status, pi_email, call_title = row
                 if not title:
                     continue  # skip rows without required data
+
+                theme_title = theme_title.replace('__',',')
                 
                 call = Call.objects.filter(title=call_title).first()
                 theme = Theme.objects.filter(title=theme_title).first()
@@ -209,6 +241,10 @@ class ReportingDateViewSet(viewsets.ModelViewSet):
     queryset = ReportingDate.objects.all()
     serializer_class = ReportingDateSerializer
 
+class ExpenditureViewSet(viewsets.ModelViewSet):
+    queryset = Expenditure.objects.all()
+    serializer_class = ExpenditureSerializer
+
 
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.all()
@@ -254,23 +290,15 @@ class ScoreViewSet(viewsets.ModelViewSet):
 
         template = 'emails/review-invitation.html'
         if not user.is_active or not user.profile: template = 'emails/new-user-review-invitation.html'
-        
-        threading.Thread(target=send_html_email, args=(
+
+        # send reviewership email
+        send_html_email(
             request,
             'PROPOSAL REVIEW INVITATION',
             [email],
             template,
             context
-        )).start()
-
-        # send reviewership email
-        # send_html_email(
-        #     request,
-        #     'PROPOSAL REVIEW INVITATION',
-        #     [email],
-        #     template,
-        #     context
-        # )
+        )
         return super().create(request, *args, **kwargs)
 
     @action(detail=True, methods=['GET'], name='validate', url_path=r'validate')
@@ -282,13 +310,16 @@ class ScoreViewSet(viewsets.ModelViewSet):
 class FacultyViewSet(viewsets.ModelViewSet):
     queryset = Faculty.objects.all()
     serializer_class = FacultySerializer
+    permission_classes = (AllowAny,)
 
 class QualificationViewSet(viewsets.ModelViewSet):
     queryset = Qualification.objects.all()
     serializer_class = QualificationSerializer
+    permission_classes = [AllowAny]
 
 
 class EntityViewSet(viewsets.ModelViewSet):
     queryset = Entity.objects.all()
     serializer_class = EntitySerializer
+    permission_classes = [AllowAny]
 

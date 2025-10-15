@@ -24,6 +24,7 @@ router.register(r'scores', ScoreViewSet)
 router.register(r'faculties', FacultyViewSet)
 router.register(r'qualifications', QualificationViewSet)
 router.register(r'entities', EntityViewSet)
+router.register(r'expenditures', ExpenditureViewSet)
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [

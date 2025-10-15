@@ -14,6 +14,12 @@ class ReportSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ExpenditureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Expenditure
+        fields = '__all__'
+
+
 class CallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Call
@@ -79,6 +85,7 @@ class ScoreSerializer(serializers.ModelSerializer):
     user__last_name = serializers.CharField(source='user.last_name', read_only=True)
     user__username = serializers.CharField(source='user.username', read_only=True)
     total_score = serializers.IntegerField(read_only=True)
+    percentage_score = serializers.IntegerField(read_only=True)
     proposal_detail = ProposalSerializer(source='proposal', read_only=True)
     class Meta:
         model = Score

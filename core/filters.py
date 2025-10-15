@@ -1,6 +1,5 @@
 from rest_framework import filters
 from django.contrib.auth.models import User
-from .models import Score, Proposal
 from datetime import datetime
 
 class ProposalFilter(filters.BaseFilterBackend):
@@ -14,7 +13,6 @@ class ProposalFilter(filters.BaseFilterBackend):
         
         submission_date_lte = request.query_params.get('submission_date__lte')
         submission_date_gte = request.query_params.get('submission_date__gte')
-        print(f"submission_date_lte: {submission_date_lte}, submission_date_gte: {submission_date_gte}")
         if submission_date_lte:
             date = datetime.strptime(submission_date_lte, "%Y/%m/%d").date()
             queryset = queryset.filter(submission_date__lte=date)
@@ -34,7 +32,9 @@ class ProposalFilter(filters.BaseFilterBackend):
             queryset = queryset.filter(team__user_id=team__has)
         if exclude__status and isinstance(exclude__status, str):
             queryset = queryset.exclude(status=exclude__status)
-        
+        # paginator = Paginator(queryset, limit)
+        # print('paginator', paginator.get_page(page).object_list)
+        # return paginator.get_page(page).object_list
         return queryset
     
 # class ProposalFilter(filters.FilterSet):

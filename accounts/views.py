@@ -21,11 +21,9 @@ from core.models import Profile, ProfileTheme, Theme
 from utils.mails import send_html_email
 from .serializers import CompleteSignupSerializer, GroupSerializer, PasswordChangeSerializer, PasswordResetSerializer, SetPasswordSerializer, UpdateUserSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
-from .serializers import CustomAuthTokenSerializer
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework import viewsets
 from django.contrib.auth.models import User
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
 from templated_email import send_templated_mail
@@ -35,13 +33,19 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.order_by('-date_joined')
     serializer_class = UserSerializer
     filter_backends = [UserFilter]
+    permission_classes = [AllowAny]
 
-    @action(detail=False, methods=['GET'], name='get_user_by_token', url_path=r'get-user-by-token/(?P<token>[^/.]+)')
-    def get_user_by_token(self, request, token, *args, **kwargs):
-        token = get_object_or_404(Token, key=token)
-        user = token.user
+    @action(
+        detail=False,
+        methods=['get'],
+        name='get_user_by_token',
+        url_path=r'get-user-by-token/(?P<token>[^/.]+)',
+    )
+    def get_user_by_token(self, request, token=None, *args, **kwargs):
+        token_obj = get_object_or_404(Token, key=token)
+        user = token_obj.user
         data = UserSerializer(user).data
-        return Response(data, status=status.HTTP_201_CREATED)
+        return Response(data, status=status.HTTP_200_OK)
 
 
     @action(detail=False, methods=['POST'], name='create_reviewer', url_path=r'create-reviewer')
@@ -69,11 +73,6 @@ class UserViewSet(viewsets.ModelViewSet):
             'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS
             }
 
-            # threading.Thread(target=send_html_email, args=(request,
-            #     'INVITATION TO MUNI RIF SYSTEM AS A REVIEWER',
-            #     [user.username],
-            #     'emails/reviewer-invite.html',context)).start()
-
             send_html_email(
                 request,
                 'INVITATION TO MUNI RIF SYSTEM AS A REVIEWER',
@@ -97,10 +96,10 @@ class UserViewSet(viewsets.ModelViewSet):
                 'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS
             }
 
-            threading.Thread(target=send_html_email, args=(request,
+            send_html_email(request,
                 'INVITATION TO MUNI RIF SYSTEM',
                 [user.username],
-                'emails/general-invite.html',context)).start()
+                'emails/general-invite.html',context)
 
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -162,10 +161,10 @@ class SignupView(APIView):
                 'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS
             }
 
-            threading.Thread(target=send_html_email, args=(request,
+            send_html_email(request,
                 'INVITATION TO MUNI RIF SYSTEM',
                 [user.username],
-                'emails/general-invite.html',context)).start()
+                'emails/general-invite.html',context)
 
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -186,14 +185,6 @@ class CompleteSignupView(APIView):
             user.is_active = True
             user.set_password(request.data['password'])
             user.save()
-            # user.groups.add(Group.objects.get(name='reviewer'))
-            # profile = user.profile
-            # profile.faculty_id=request.data['faculty']
-            # profile.department_id=request.data['department']
-            # profile.qualification_id=request.data['qualification']
-            # profile.phone=request.data['phone']
-            # profile.gender=request.data['gender']
-            # profile.designation=request.data['designation']
 
             login(request, user)
 
@@ -297,7 +288,8 @@ def update_user(request):
 
 
 @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
+@authentication_classes([])  # Disable authentication
+@permission_classes([])      # Disable permission checks
 def reset_password(request):
     serializer = PasswordResetSerializer(data=request.data)
     if serializer.is_valid():
@@ -309,6 +301,7 @@ def reset_password(request):
         context = {
             'user': user, 'token':token, 'client_address': settings.CLIENT_ADDRESS
             }
+        
         send_html_email(
             request,
             'PASSWORD RESET',
@@ -323,7 +316,8 @@ def reset_password(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
+@authentication_classes([])  # Disable authentication
+@permission_classes([])      # Disable permission checks
 def set_password(request):
     serializer = SetPasswordSerializer(data=request.data)
     if serializer.is_valid():
@@ -371,10 +365,11 @@ def complete_signup(request):
 
 
 def send_email_notifications(request):
-    threading.Thread(target=send_html_email, args=(request,
-                'INVITATION TO MUNI RIF SYSTEM AS A REVIEWER',
+    send_html_email(request,
+                'TEST NOTIFICATION',
                 [],
-                'emails/notification.html', {})).start()
+                'emails/notification.html', {}
+    )
     
     data = json.dumps({
         "message": "This is a test notification."

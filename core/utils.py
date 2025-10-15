@@ -3,7 +3,7 @@ import openpyxl
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.utils import get_column_letter
 
-def generate_excel_from_schema(schema, filename="output.xlsx", row_limit=100):
+def generate_excel_from_schema(schema, references, filename="output.xlsx", row_limit=100):
     file_name="user_data_template.xlsx"
     downloads_folder = settings.MEDIA_ROOT / 'downloads'
     downloads_url = '/media/downloads'
@@ -38,8 +38,16 @@ def generate_excel_from_schema(schema, filename="output.xlsx", row_limit=100):
             for row in range(2, row_limit + 1):
                 ws[f"{col_letter}{row}"].number_format = "yyyy-mm-dd"
 
+    ws_list = wb.create_sheet(title="Sheet2")
+    add_references(ws_list, references)
+
     # Save workbook
     wb.save(file_path)
     print(f"Excel file saved as '{filename}'")
     return f'{downloads_url}/{file_name}'
 
+def add_references(ws_list, references):
+    for k, v in references.items():
+        options = v
+        for i, value in enumerate(options, start=1):
+            ws_list[f"{k}{i}"] = value

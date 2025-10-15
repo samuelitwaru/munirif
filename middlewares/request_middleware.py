@@ -1,5 +1,10 @@
 # middleware.py
+from datetime import timedelta
+from django.utils import timezone
 import threading
+from accounts.utils import get_token
+from rest_framework.authtoken.models import Token
+
 
 _request_local = threading.local()
 
@@ -11,6 +16,13 @@ class RequestMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        key = get_token(request)
+        token = Token.objects.filter(key=key).first()
+        if token:
+            expiration_time = token.created + timedelta(hours=24)
+            if timezone.now() > expiration_time:
+                token.delete()
+        # if token and token.created
         _request_local.request = request
         response = self.get_response(request)
         return response

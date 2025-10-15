@@ -36,8 +36,6 @@ STAGING = os.getenv('STAGING') == 'True'
 
 ALLOWED_HOSTS = ['*']
 
-print(os.getenv('DEBUG'))
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -201,10 +199,15 @@ print('EMAIL_HOST_USER:', EMAIL_HOST_USER)
 print('EMAIL_HOST_PASSWORD:', EMAIL_HOST_PASSWORD)
 
 
-
-
 REST_FRAMEWORK = {
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication'
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 PROPOSAL_FILES_DIR = MEDIA_ROOT / 'proposal_files'
