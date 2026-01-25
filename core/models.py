@@ -61,6 +61,7 @@ class Call(TimeStampedModel):
     selection_date = models.DateField(null=True)
     description = models.TextField(blank=True, null=True)
     entity = models.ForeignKey('Entity', null=True, blank=True, on_delete=models.SET_NULL)
+    fund_allocation = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.title
@@ -69,6 +70,7 @@ class ReportingDate(TimeStampedModel):
     title = models.CharField(max_length=128)
     date = models.DateField()
     call = models.ForeignKey(Call, on_delete=models.CASCADE, null=True, blank=True)
+    template = models.FileField(storage=file_storage, null=True, blank=True)
 
     def __str__(self) -> str:
         return f'{self.title} {self.call}'
@@ -122,6 +124,7 @@ class Proposal(TimeStampedModel):
     workplan = models.TextField(null=True, blank=True)
     team_members = models.ManyToManyField(User, related_name='team_proposals', blank=True)
     is_selected = models.BooleanField(default=False)
+    budget_allocation = models.PositiveIntegerField(null=True, blank=True)
     
     def __str__(self):
         return self.title
@@ -140,12 +143,24 @@ class Proposal(TimeStampedModel):
             return self.total_score/count
         return 0
 
+    
+class BudgetCategory(models.Model):
+    title = models.CharField(max_length=128)
+    proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self) -> str:
+        return self.title
+
+
 class Budget(TimeStampedModel):
     item = models.CharField(max_length=128)
     quantity = models.PositiveIntegerField()
     units = models.CharField(max_length=64)
     unit_cost = models.PositiveIntegerField()
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
+    budget_category = models.ForeignKey(BudgetCategory, on_delete=models.CASCADE, null=True, blank=True)
+
+    
     @property
     def total_cost(self):
         return self.quantity * self.unit_cost
@@ -235,6 +250,10 @@ class Report(models.Model):
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     reporting_date = models.ForeignKey(ReportingDate, on_delete=models.SET_NULL, null=True, blank=True)
 
+    def __str__(self) -> str:
+        return f'{self.title} - {self.proposal}'
+
+
 class Expenditure(TimeStampedModel):
     item = models.CharField(max_length=128)
     quantity = models.PositiveIntegerField()
@@ -242,6 +261,7 @@ class Expenditure(TimeStampedModel):
     unit_cost = models.PositiveIntegerField()
     date = models.DateField()
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
+    budget_category = models.ForeignKey(BudgetCategory, on_delete=models.CASCADE, null=True, blank=True)
     remarks = models.CharField(max_length=256, null=True, blank=True)
 
     def __str__(self) -> str:
@@ -250,6 +270,16 @@ class Expenditure(TimeStampedModel):
     @property
     def amount(self):
         return self.quantity * self.unit_cost
+
+
+class ProjectObjective(models.Model):
+    title = models.CharField(max_length=128)
+    description = models.TextField()
+    proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return self.title
+    
 
 class Qualification(models.Model):
     name = models.CharField(max_length=64)

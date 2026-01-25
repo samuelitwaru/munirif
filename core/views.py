@@ -4,7 +4,7 @@ import openpyxl
 from rest_framework import viewsets, filters
 from django.shortcuts import get_object_or_404
 from accounts.serializers import UserSerializer
-from core.filters import ProposalFilter, ScoreFilter
+from core.filters import ProposalFilter, ReportFilter, ScoreFilter
 # from core.tasks import delete_expired_invitations
 from core.utils import generate_excel_from_schema
 from utils.helpers import get_host_name, write_proposal_pdf, write_xlsx_file
@@ -33,7 +33,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     filterset_fields = '__all__'
 
     def list(self, request, *args, **kwargs):
-        limit = request.query_params.get('limit')
+        limit = request.query_params.get('limit') or 20
         page = request.query_params.get('page')
         queryset = self.filter_queryset(self.get_queryset())
         paginator = Paginator(queryset, limit)
@@ -241,10 +241,18 @@ class ReportingDateViewSet(viewsets.ModelViewSet):
     queryset = ReportingDate.objects.all()
     serializer_class = ReportingDateSerializer
 
+
 class ExpenditureViewSet(viewsets.ModelViewSet):
     queryset = Expenditure.objects.all()
     serializer_class = ExpenditureSerializer
 
+class BudgetCategoryViewSet(viewsets.ModelViewSet):
+    queryset = BudgetCategory.objects.all()
+    serializer_class = BudgetCategorySerializer
+
+class ProjectObjectiveViewSet(viewsets.ModelViewSet):
+    queryset = ProjectObjective.objects.all()
+    serializer_class = ProjectObjectiveSerializer
 
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.all()
@@ -261,11 +269,16 @@ class FileViewSet(viewsets.ModelViewSet):
     filterset_fields = ['proposal_id', 'attachment_id']
 
 
+# class ReportViewSet(viewsets.ModelViewSet):
+#     queryset = Report.objects.all()
+#     serializer_class = ReportSerializer
+#     filter_backends = [DjangoFilterBackend]
+#     filterset_fields = ['proposal_id', 'reporting_date_id']
+
 class ReportViewSet(viewsets.ModelViewSet):
-    queryset = Report.objects.all()
+    queryset = Report.objects
     serializer_class = ReportSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['proposal_id', 'reporting_date_id']
+    filter_backends = [DjangoFilterBackend, ReportFilter]
 
 class ScoreViewSet(viewsets.ModelViewSet):
     queryset = Score.objects.all()

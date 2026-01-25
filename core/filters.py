@@ -37,6 +37,41 @@ class ProposalFilter(filters.BaseFilterBackend):
         # return paginator.get_page(page).object_list
         return queryset
     
+class ReportFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        # Implement your custom filtering logic here
+        # Modify the queryset as needed based on the request
+        # For example:
+        search_query = request.query_params.get('search_query')
+        if search_query:
+            queryset = queryset.filter(title__icontains=search_query)
+        
+        submission_date_lte = request.query_params.get('submission_date__lte')
+        submission_date_gte = request.query_params.get('submission_date__gte')
+        if submission_date_lte:
+            date = datetime.strptime(submission_date_lte, "%Y/%m/%d").date()
+            queryset = queryset.filter(submission_date__lte=date)
+        if submission_date_gte:
+            date = datetime.strptime(submission_date_gte, "%Y/%m/%d").date()
+            queryset = queryset.filter(submission_date__gte=date)
+        
+
+        team__has = request.query_params.get('team__has')
+        try:
+            team__has = int(team__has)
+        except:
+            pass
+        exclude__status = request.query_params.get('exclude__status')
+        
+        if team__has and isinstance(team__has, int):
+            queryset = queryset.filter(team__user_id=team__has)
+        if exclude__status and isinstance(exclude__status, str):
+            queryset = queryset.exclude(status=exclude__status)
+        # paginator = Paginator(queryset, limit)
+        # print('paginator', paginator.get_page(page).object_list)
+        # return paginator.get_page(page).object_list
+        return queryset
+    
 # class ProposalFilter(filters.FilterSet):
 #     exclude_field_name = filters.CharFilter(method='filter_exclude_field_name')
 
@@ -56,5 +91,12 @@ class ScoreFilter(filters.BaseFilterBackend):
         if status: 
             status_list = status.split('|')
             return queryset.filter(status__in=status_list)
+        return queryset
+    
+class ReportFilter(filters.BaseFilterBackend):
+
+    def filter_queryset(self, request, queryset, view):
+        params = request.query_params.dict()
+        queryset = queryset.filter(**params)
         return queryset
 

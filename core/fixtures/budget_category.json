@@ -1,0 +1,51 @@
+[
+    {
+        "model": "core.budgetcategory",
+        "pk": 1,
+        "fields": {
+            "title": "Personnel Costs",
+            "proposal_id": null 
+        }
+    },
+    {
+        "model": "core.budgetcategory",
+        "pk": 2,
+        "fields": {
+            "title": "Supplies and Services",
+            "proposal_id": null 
+        }
+    },
+    {
+        "model": "core.budgetcategory",
+        "pk": 3,
+        "fields": {
+            "title": "Equipment",
+            "proposal_id": null 
+        }
+    },
+    {
+        "model": "core.budgetcategory",
+        "pk": 4,
+        "fields": {
+            "title": "Travel Costs",
+            "proposal_id": null 
+        }
+    },
+    {
+        "model": "core.budgetcategory",
+        "pk": 5,
+        "fields": {
+            "title": "Program Activity Costs",
+            "proposal_id": null 
+        }
+    },
+    {
+        "model": "core.budgetcategory",
+        "pk": 6,
+        "fields": {
+            "title": "Dissemination",
+            "proposal_id": null 
+        }
+    }
+  ]
+  

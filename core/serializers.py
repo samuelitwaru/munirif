@@ -13,10 +13,20 @@ class ReportSerializer(serializers.ModelSerializer):
         model = Report
         fields = '__all__'
 
+class BudgetCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BudgetCategory
+        fields = '__all__'
 
 class ExpenditureSerializer(serializers.ModelSerializer):
+    budget_category_title = serializers.CharField(source='budget_category.title', read_only=True)
     class Meta:
         model = Expenditure
+        fields = '__all__'
+
+class ProjectObjectiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectObjective
         fields = '__all__'
 
 
@@ -66,6 +76,7 @@ class ProposalSerializer(serializers.ModelSerializer):
 
 
 class BudgetSerializer(serializers.ModelSerializer):
+    budget_category_title = serializers.CharField(source='budget_category.title', read_only=True)
     class Meta:
         model = Budget
         fields = '__all__'
