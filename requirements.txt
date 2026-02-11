@@ -27,4 +27,5 @@ soupsieve==2.5
 sqlparse==0.4.4
 tzdata==2023.3
 whitenoise==6.9.0
+XlsxWriter==3.2.9
 gunicorn

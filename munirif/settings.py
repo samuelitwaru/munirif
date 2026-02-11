@@ -20,7 +20,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv_path = os.path.join(BASE_DIR, '.env')
 load_dotenv(dotenv_path)
 
-print('BASE_DIR:', dotenv_path)
+# print('BASE_DIR:', dotenv_path)
+
+
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': '../media/error.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
+
+WHITENOISE_MANIFEST_STRICT = False
 
 
 
@@ -31,8 +51,17 @@ print('BASE_DIR:', dotenv_path)
 SECRET_KEY = 'django-insecure-)hfk+ha#s%whs^o6)7u7!b9p8mdj4_@q8m%3!kk2f*i2h=v@1&'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG') == 'True'
-STAGING = os.getenv('STAGING') == 'True'
+if os.getenv('DEBUG') is None:
+    DEBUG = True
+else:
+    DEBUG = os.getenv('DEBUG') == 'True'
+
+if os.getenv('STAGING') is None:
+    STAGING = False
+else:
+    STAGING = os.getenv('STAGING') == 'True'
+
+print(os.getenv('DEBUG'))
 
 ALLOWED_HOSTS = ['*']
 
@@ -107,9 +136,12 @@ MYSQL_SETTINGS = {
     'PORT': os.getenv('DB_PORT') or '3306',
 }
 
+print('DB_NAME:', os.getenv('DB_NAME'))
+
+
 
 DATABASES = {
-    'default': MYSQL_SETTINGS if DEBUG else SQLITE_SETTINGS
+    'default': MYSQL_SETTINGS
 }
 
 
@@ -145,18 +177,19 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.path.dirname(BASE_DIR)) / 'media/'
+
+print('MEDIA_ROOT', MEDIA_ROOT)
 
 
 
@@ -172,11 +205,19 @@ CORS_ALLOWED_ORIGINS = [
     'https://muni-rif.web.app',
     'https://munirif.ecdouganda.org',
     'https://gms.muni.ac.ug',
+    'https://10.1.0.28',
+    'https://137.63.168.52'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://munirif.ecdouganda.org",
+    "http://munirif.ecdouganda.org",
     "https://munirif.vps.webdock.cloud",
+    'https://10.1.0.28',
+    'https://137.63.168.52'
 ]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 if STAGING:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -192,11 +233,11 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
-print('EMAIL_HOST:', EMAIL_HOST)
-print('EMAIL_PORT:', EMAIL_PORT)
-print('EMAIL_USE_TLS:', EMAIL_USE_TLS)
-print('EMAIL_HOST_USER:', EMAIL_HOST_USER)
-print('EMAIL_HOST_PASSWORD:', EMAIL_HOST_PASSWORD)
+# print('EMAIL_HOST:', EMAIL_HOST)
+# print('EMAIL_PORT:', EMAIL_PORT)
+# print('EMAIL_USE_TLS:', EMAIL_USE_TLS)
+# print('EMAIL_HOST_USER:', EMAIL_HOST_USER)
+# print('EMAIL_HOST_PASSWORD:', EMAIL_HOST_PASSWORD)
 
 
 REST_FRAMEWORK = {

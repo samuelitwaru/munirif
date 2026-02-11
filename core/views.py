@@ -3,6 +3,7 @@ import threading
 import openpyxl
 from rest_framework import viewsets, filters
 from django.shortcuts import get_object_or_404
+import xlsxwriter
 from accounts.serializers import UserSerializer
 from core.filters import ProposalFilter, ReportFilter, ScoreFilter
 # from core.tasks import delete_expired_invitations
@@ -191,8 +192,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
 class BudgetViewSet(viewsets.ModelViewSet):
     queryset = Budget.objects.all()
     serializer_class = BudgetSerializer
@@ -216,6 +215,7 @@ class ProfileThemeViewSet(viewsets.ModelViewSet):
 class ThemeViewSet(viewsets.ModelViewSet):
     queryset = Theme.objects.all()
     serializer_class = ThemeSerializer
+
 
 class CallViewSet(viewsets.ModelViewSet):
     queryset = Call.objects.all()
@@ -245,6 +245,65 @@ class ReportingDateViewSet(viewsets.ModelViewSet):
 class ExpenditureViewSet(viewsets.ModelViewSet):
     queryset = Expenditure.objects.all()
     serializer_class = ExpenditureSerializer
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
+    ordering_fields = ["unit_cost", "quantity"]
+    filterset_fields = '__all__'
+
+    @action(detail=False, methods=['GET'], name='financial_report', url_path=r'financial-report/download')
+    def financial_report(self, request, *args, **kwargs):
+        entity = Entity.objects.first()
+        proposals = Proposal.objects.filter(is_selected=True, call=entity.current_call.id)
+        headers = ['Project', 'Last Updated', 'Budget', 'Allocated', 'Accounted', 'Unaccounted']
+        data = []
+
+        for proposal in proposals:
+            row = [
+                proposal.title, 
+                proposal.updated_at.strftime('%Y-%m-%d'), 
+                proposal.total_budget, proposal.budget_allocation or 0, 
+                proposal.total_expenditure, 
+                ((proposal.budget_allocation or 0) - proposal.total_expenditure)]
+            data.append(row)
+        
+        totals_row = [
+            'TOTAL',
+            '',
+            sum(row[2] for row in data),
+            sum(row[3] for row in data),
+            sum(row[4] for row in data),
+            sum(row[5] for row in data)
+        ]
+        
+        filename = 'financial-reports.xlsx'
+        filepath = settings.MEDIA_ROOT / f'downloads/{filename}'
+        workbook = xlsxwriter.Workbook(filepath)
+
+        header_format = workbook.add_format({
+            'bold': True,
+            'border': 1,
+            'align': 'center',
+            'bg_color': '#D9D9D9'
+        })
+
+        border_format = workbook.add_format({'border':1})
+
+        date_format = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+        currency_format = workbook.add_format({'num_format': '#,##0'})
+
+        worksheet = workbook.add_worksheet()
+        worksheet.write_row('A1', headers, header_format)
+        for row_num, row_data in enumerate(data, start=1):
+            worksheet.write_row(row_num, 0, row_data)
+        
+        worksheet.write_row(row_num+1, 0, totals_row, header_format)
+        
+        worksheet.set_column('B:B', 15, date_format)
+        worksheet.set_column('C:G', 15, currency_format)
+        worksheet.autofit()
+        workbook.close()
+        file = settings.MEDIA_URL + f'downloads/{filename}'
+        host = get_host_name(request)
+        return Response({'file_url':f'{host}{file}'})
 
 class BudgetCategoryViewSet(viewsets.ModelViewSet):
     queryset = BudgetCategory.objects.all()
@@ -284,7 +343,7 @@ class ScoreViewSet(viewsets.ModelViewSet):
     queryset = Score.objects.all()
     serializer_class = ScoreSerializer
     filter_backends = [DjangoFilterBackend, ScoreFilter]
-    filterset_fields = ['proposal', 'status', 'user']
+    filterset_fields = ['proposal', 'status', 'user', 'proposal__call']
     
     def create(self, request, *args, **kwargs):
         user = request.data['user']

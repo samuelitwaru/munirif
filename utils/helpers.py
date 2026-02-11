@@ -9,7 +9,6 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, ListFlowable, ListItem, Spacer, HRFlowable, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
-import os
 from bs4 import BeautifulSoup
 from core.models import Section
 import locale
@@ -67,6 +66,7 @@ def write_xlsx_file(file_name, columns, data):
     excel_file = settings.MEDIA_ROOT / f'downloads/{file_name}'
     df.to_excel(excel_file, index=False)
     return settings.MEDIA_URL + f'downloads/{file_name}'
+
 
 
 def write_proposal_pdf(file_name, proposal):

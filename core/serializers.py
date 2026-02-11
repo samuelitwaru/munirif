@@ -31,6 +31,7 @@ class ProjectObjectiveSerializer(serializers.ModelSerializer):
 
 
 class CallSerializer(serializers.ModelSerializer):
+    period = serializers.CharField(read_only=True)
     class Meta:
         model = Call
         fields = '__all__'
@@ -65,6 +66,9 @@ class ProposalSerializer(serializers.ModelSerializer):
     user__last_name = serializers.CharField(source='user.last_name', read_only=True)
     total_score = serializers.IntegerField(read_only=True)
     average_score = serializers.IntegerField(read_only=True)
+    total_expenditure = serializers.IntegerField(read_only=True)
+    total_budget = serializers.IntegerField(read_only=True)
+    expenditures = ExpenditureSerializer(many=True, source='expenditure_set', read_only=True)
     
     class Meta:
         model = Proposal

@@ -1,3 +1,4 @@
+from subprocess import call
 import threading
 from django.db import models
 from django.contrib.auth.models import User
@@ -21,7 +22,7 @@ STATUS_CHOICES = [
 ]
 
 SCORE_STATUS_CHOICES = [
-    ('SUBMITTED', 'SUBMITTED'),
+    ('PENDING', 'PENDING'),
     ('IN PROGRESS', 'IN PROGRESS'),
     ('COMPLETED', 'COMPLETED'),
 ]
@@ -65,6 +66,21 @@ class Call(TimeStampedModel):
 
     def __str__(self):
         return self.title
+    
+    @property
+    def period(self):
+        today = date.today()
+        if self.date_from < today and self.submission_date > today:
+            return "APPLICATION"
+        elif self.submission_date < today and self.review_date > today:
+            return "REVIEW"
+        elif self.review_date < today and self.selection_date > today:
+            return "SELECTION"
+        elif self.selection_date < today and self.date_to > today:
+            return "REPORTING"
+        else:
+            return "CLOSED"
+
     
 class ReportingDate(TimeStampedModel):
     title = models.CharField(max_length=128)
@@ -124,7 +140,7 @@ class Proposal(TimeStampedModel):
     workplan = models.TextField(null=True, blank=True)
     team_members = models.ManyToManyField(User, related_name='team_proposals', blank=True)
     is_selected = models.BooleanField(default=False)
-    budget_allocation = models.PositiveIntegerField(null=True, blank=True)
+    budget_allocation = models.PositiveIntegerField(default=0, null=True, blank=True)
     
     def __str__(self):
         return self.title
@@ -143,6 +159,19 @@ class Proposal(TimeStampedModel):
             return self.total_score/count
         return 0
 
+    @property
+    def total_expenditure(self):
+        total = 0
+        for expenditure in self.expenditure_set.all():
+            total += expenditure.amount
+        return total
+
+    @property
+    def total_budget(self):
+        total = 0
+        for budget in self.budget_set.all():
+            total += budget.total_cost
+        return total
     
 class BudgetCategory(models.Model):
     title = models.CharField(max_length=128)
@@ -208,7 +237,7 @@ class Score(TimeStampedModel):
     weaknesses = models.TextField(null=True, blank=True)
     comment = models.TextField(null=True)
 
-    status = models.CharField(max_length=64, default='SUBMITTED', choices=SCORE_STATUS_CHOICES) # SUBMITTED, ACCEPTED, COMPLETED
+    status = models.CharField(max_length=64, default='PENDING', choices=SCORE_STATUS_CHOICES) # SUBMITTED, ACCEPTED, COMPLETED
     user = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
 
@@ -308,6 +337,7 @@ class Profile(models.Model):
     gender = models.CharField(max_length=8, choices=GENDER_CHOICES)
     phone = models.CharField(max_length=10)
     designation = models.CharField(max_length=32)
+    settings = models.JSONField(default=dict, blank=True, null=True)
     
     def __str__(self):
         return f'{self.user.first_name} {self.user.last_name}'
@@ -318,7 +348,12 @@ class ProfileTheme(models.Model):
 
     def __str__(self):
         return f'{self.profile} - {self.theme}'
-    
+
+class Entity(models.Model):
+    name = models.CharField(max_length=128)
+    current_call = models.ForeignKey(Call, null=True, blank=True, on_delete=models.SET_NULL, related_name='current_call')
+
+
 @receiver(post_save, sender=Score)
 @receiver(post_delete, sender=Score)
 def on_score_status_change(sender, instance, **kwargs):
@@ -403,7 +438,11 @@ def send_proposal_submitted_email(sender, instance, **kwargs):
         send_mail = True
     if send_mail:
         send_html_email(request, subject, [], html_template, context)
+
+@receiver(post_save, sender=Call)
+def on_call_added(sender, instance, **kwargs):
+    calls = Call.objects.filter(entity=instance.entity)
+    if calls.count() == 1:
+        instance.entity.current_call = instance
+        instance.entity.save()
         
-class Entity(models.Model):
-    name = models.CharField(max_length=128)
-    current_call = models.ForeignKey(Call, null=True, blank=True, on_delete=models.SET_NULL, related_name='current_call')

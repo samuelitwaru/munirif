@@ -4,3 +4,10 @@ services:
     build: .
     ports:
       - "3306:3306"
+  web:
+    environment:
+      - DB_USER=root
+      - DB_PASSWORD=bratz123
+      - DB_NAME=munirif
+      - DB_HOST=localhost
+      - DB_PORT=3306
