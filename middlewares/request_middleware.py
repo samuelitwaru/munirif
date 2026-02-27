@@ -19,7 +19,7 @@ class RequestMiddleware:
         key = get_token(request)
         token = Token.objects.filter(key=key).first()
         if token:
-            expiration_time = token.created + timedelta(hours=24)
+            expiration_time = token.created + timedelta(minutes=60)
             if timezone.now() > expiration_time:
                 token.delete()
         # if token and token.created

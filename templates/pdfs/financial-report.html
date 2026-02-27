@@ -1,0 +1,31 @@
+{% extends 'pdfs/base.html' %}
+
+{% block body %}
+<div class="containe">
+    <table class="tabl">
+        <thead>
+            <tr>
+                <th>Project</th>
+                <th>Last Updated</th>
+                <th>Budget</th>
+                <th>Allocated</th>
+                <th>Accounted</th>
+                <th>Unaccounted</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prop in proposals %}
+            <tr>
+                <td scope="row">{{prop.title}}</td>
+                <td>{{prop.updated_at}}</td>
+                <td>{{prop.total_budget}}</td>
+                <td>{{prop.budget_allocation}}</td>
+                <td>{{prop.accounted}}</td>
+                <td>{{prop.budget_allocation}}</td>
+            </tr>
+            {%endfor%}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}

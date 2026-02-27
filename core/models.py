@@ -70,6 +70,8 @@ class Call(TimeStampedModel):
     @property
     def period(self):
         today = date.today()
+        if not (self.date_from and self.date_to and self.submission_date and self.review_date and self.selection_date):
+            return ""
         if self.date_from < today and self.submission_date > today:
             return "APPLICATION"
         elif self.submission_date < today and self.review_date > today:
@@ -116,6 +118,7 @@ class Attachment(models.Model):
 class Theme(TimeStampedModel):
     title = models.CharField(max_length=128)
     call = models.ForeignKey(Call, null=True, on_delete=models.SET_NULL)
+    calls = models.ManyToManyField(Call, related_name='themes', blank=True)
 
     def __str__(self) -> str:
         return self.title

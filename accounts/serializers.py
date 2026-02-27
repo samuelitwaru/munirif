@@ -97,7 +97,7 @@ class UpdateUserSerializer(serializers.Serializer):
     first_name = serializers.CharField()
     last_name = serializers.CharField()
     phone = serializers.IntegerField()
-    faculty = serializers.IntegerField()
-    department = serializers.IntegerField()
-    qualification = serializers.IntegerField()
+    faculty = serializers.IntegerField(required=False, allow_null=True)
+    department = serializers.IntegerField(required=False, allow_null=True)
+    qualification = serializers.IntegerField(required=False, allow_null=True)
     

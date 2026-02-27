@@ -7,8 +7,8 @@ import xlsxwriter
 from accounts.serializers import UserSerializer
 from core.filters import ProposalFilter, ReportFilter, ScoreFilter
 # from core.tasks import delete_expired_invitations
-from core.utils import generate_excel_from_schema
-from utils.helpers import get_host_name, write_proposal_pdf, write_xlsx_file
+from core.utils import create_project_template, generate_excel_from_schema
+from utils.helpers import comma_separator, generate_financial_report_pdf, get_host_name, write_proposal_pdf, write_xlsx_file
 from datetime import datetime, timedelta
 from django.utils import timezone
 from utils.mails import send_html_email
@@ -24,6 +24,9 @@ from rest_framework import status
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from rest_framework.permissions import AllowAny
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 
 class ProposalViewSet(viewsets.ModelViewSet):
@@ -99,16 +102,35 @@ class ProposalViewSet(viewsets.ModelViewSet):
         scores = proposal.score_set.all()
         rows = []
         for index, section in enumerate(sections):
-            data = [section.title] + [getattr(score, section.name) for score in scores] + [f"=sum({chr(ord('b'))}{index+2}:{chr(ord('b')+len(scores)-1)}{index+2})"] + [f"=average({chr(ord('b'))}{index+2}:{chr(ord('b')+len(scores)-1)}{index+2})"]
-            rows.append(data)
+            if section.max_score > 0:
+                data = [section.title] + [getattr(score, section.name) for score in scores] + [f"=sum({chr(ord('b'))}{index+2}:{chr(ord('b')+len(scores)-1)}{index+2})"] + [f"=average({chr(ord('b'))}{index+2}:{chr(ord('b')+len(scores)-1)}{index+2})"]
+                rows.append(data)
         columns = ['Section'] + [str(score.user) for score in scores] + ['TOTAL', 'AVERAGE']
 
-        foot = ['TOTAL'] + [f'=sum({chr(num)}2:{chr(num)}12)' for num in range(ord('b'), ord('b')+len(scores))]
+        foot = ['TOTAL'] + [f'=sum({chr(num)}2:{chr(num)}{len(rows)+1})' for num in range(ord('b'), ord('b')+len(scores))]
         rows.append(foot)
         file = write_xlsx_file(f'score-sheet-{proposal.id}.xlsx', columns, rows)
         host = get_host_name(request)
         return Response({'file_url':f'{host}{file}'}) 
     
+    @action(detail=True, methods=['GET'], name='download_expenses', url_path=r'expenses/download')
+    def download_expenses(self, request, pk, *args, **kwargs):
+        proposal = Proposal.objects.get(id=pk)
+        expenses = proposal.expenditure_set.all()
+
+        rows = []
+        for exp in expenses:
+            data = [exp.date, exp.budget_category, exp.item, exp.units, exp.quantity, exp.unit_cost, exp.amount, exp.remarks]
+            rows.append(data)
+
+        columns = ['Date', 'Category', 'Item', 'Units', 'Quantity', 'Unit Cost', 'Amount', 'Remarks']
+        foot = ['TOTAL', '', '', '', '', '', f'=sum({chr(ord("g"))}2:{chr(ord("g"))}{len(expenses)+1})']
+        rows.append(foot)
+        file = write_xlsx_file(f'expenses-{proposal.id}.xlsx', columns, rows)
+        host = get_host_name(request)
+        return Response({'file_url':f'{host}{file}'}) 
+    
+
     @action(detail=True, methods=['GET'], name='download_pdf', url_path=r'pdf/download')
     def download_pdf(self, request, pk, *args, **kwargs):
         proposal = Proposal.objects.get(id=pk)
@@ -124,6 +146,10 @@ class ProposalViewSet(viewsets.ModelViewSet):
             theme_titles.append(title)
         users = [user.username for user in User.objects.filter(groups__name="reviewer")]
         calls = [call.title for call in Call.objects.all()]
+        file = create_project_template('template.xlsx', theme_titles, users, calls)
+        host = get_host_name(request)
+        return Response({'file_url':f'{host}{file}'})
+        return None
         schema =  [
             {
                 "name": "Title",
@@ -190,6 +216,28 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
             return Response({"message": f"{created} records imported"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['POST'], name='award', url_path=r'award', serializer_class=AwardSerializer)
+    def award(self, request, pk, *args, **kwargs):
+        proposal = Proposal.objects.get(id=pk)
+        if proposal:
+            data = request.data
+            serializer = AwardSerializer(data=data)
+            if serializer.is_valid():
+                message = serializer.validated_data['message']
+                html_message = render_to_string('emails/award.html', {'message': message, 'proposal': proposal})
+                plain_message = strip_tags(html_message)
+                recipient_list = [proposal.user.email]
+                print('recipient_list', recipient_list)
+
+                threading.Thread(
+                    target=send_mail, 
+                    args=('AWARD', plain_message, 'samuelitwaru@gmail.com', recipient_list),
+                    kwargs={'html_message':html_message, 'fail_silently': False}
+                ).start()
+                proposal_serializer = ProposalSerializer(proposal)
+                return Response(proposal_serializer.data, status=status.HTTP_200_OK)
+        return Response({'detail': 'Invalid Data'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BudgetViewSet(viewsets.ModelViewSet):
@@ -295,7 +343,7 @@ class ExpenditureViewSet(viewsets.ModelViewSet):
         for row_num, row_data in enumerate(data, start=1):
             worksheet.write_row(row_num, 0, row_data)
         
-        worksheet.write_row(row_num+1, 0, totals_row, header_format)
+        worksheet.write_row(row_num+1, 0, totals_row)
         
         worksheet.set_column('B:B', 15, date_format)
         worksheet.set_column('C:G', 15, currency_format)
@@ -304,6 +352,39 @@ class ExpenditureViewSet(viewsets.ModelViewSet):
         file = settings.MEDIA_URL + f'downloads/{filename}'
         host = get_host_name(request)
         return Response({'file_url':f'{host}{file}'})
+
+    @action(detail=False, methods=['GET'], name='financial_pdf_report', url_path=r'financial-pdf-report/download')
+    def financial_pdf_report(self, request, *args, **kwargs):
+        entity = Entity.objects.first()
+        call_id = request.query_params.get('call') or entity.current_call.id
+        
+        proposals = Proposal.objects.filter(is_selected=True, call=call_id)
+        data = []
+        for prop in proposals:
+            row = {
+                "title":prop.title, 
+                "updated_at":str(prop.updated_at.strftime('%Y-%m-%d')), 
+                "total_budget":  comma_separator(prop.total_budget), 
+                "budget_allocation":comma_separator(prop.budget_allocation or 0), 
+                "total_expenditure": comma_separator(prop.total_expenditure), 
+                "unaccounted":((prop.budget_allocation or 0) - prop.total_expenditure),
+                "expenses": [
+                    {
+                        "date":exp.date.strftime('%Y-%m-%d'),
+                        "item":exp.item,
+                        "category":exp.budget_category,
+                        "quantity":exp.quantity,
+                        "units":exp.units,
+                        "unit_cost":exp.unit_cost,
+                        "amount":exp.amount,
+                        "remarks":exp.remarks
+                    } for exp in prop.expenditure_set.all()]
+            }
+            data.append(row)
+        # data.append(row);data.append(row);data.append(row);data.append(row);data.append(row)
+        filepath = generate_financial_report_pdf('financial-report.pdf', data)
+        host = get_host_name(request)
+        return Response({'file_url':f'{host}{filepath}'})
 
 class BudgetCategoryViewSet(viewsets.ModelViewSet):
     queryset = BudgetCategory.objects.all()

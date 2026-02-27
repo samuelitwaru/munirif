@@ -1,22 +1,28 @@
 import pandas as pd
 from django.conf import settings
-from reportlab.pdfgen import canvas 
-from reportlab.pdfbase.ttfonts import TTFont 
-from reportlab.pdfbase import pdfmetrics 
 from reportlab.lib import colors 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, ListFlowable, ListItem, Spacer, HRFlowable, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle
+)
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import A4
 from bs4 import BeautifulSoup
 from core.models import Section
-import locale
+
 
 def comma_separator(num):
     return "{:,}".format(num)
-
-
 
 def clean_and_convert_html(html_content):
     html_content = clean_html(html_content)
@@ -66,7 +72,6 @@ def write_xlsx_file(file_name, columns, data):
     excel_file = settings.MEDIA_ROOT / f'downloads/{file_name}'
     df.to_excel(excel_file, index=False)
     return settings.MEDIA_URL + f'downloads/{file_name}'
-
 
 
 def write_proposal_pdf(file_name, proposal):
@@ -136,3 +141,117 @@ def write_proposal_pdf(file_name, proposal):
     doc.build(story)
     return f'{downloads_url}/{file_name}'
 
+def generate_financial_report_pdf(filename, data):
+    """
+    Generate a PDF financial report with nested expense tables.
+
+    :param filename: Output PDF filename
+    :param data: List of project financial dictionaries
+    """
+
+    downloads_folder = settings.MEDIA_ROOT / 'downloads'
+    downloads_url = '/media/downloads'
+    file_path = f'{downloads_folder}/{filename}'
+
+    doc = SimpleDocTemplate(
+        file_path, pagesize=A4, 
+        rightMargin=20,
+        leftMargin=20,
+        topMargin=20,
+        bottomMargin=20
+    )
+    elements = []
+    styles = getSampleStyleSheet()
+
+    for project in data:
+        # === Project Title ===
+        elements.append(Paragraph(f"<b>Project:</b> {project['title']}", styles["Heading2"]))
+        # elements.append(Spacer(1, 0.2 * inch))
+
+        # === Project Financial Summary Table ===
+        summary_data = [
+            ["Updated At", project["updated_at"]],
+            ["Total Budget", project["total_budget"]],
+            ["Budget Allocation", project["budget_allocation"]],
+            ["Total Expenditure", project["total_expenditure"]],
+            ["Unaccounted", f"{project['unaccounted']:,}"],
+        ]
+
+        summary_data = [
+            ["Last Updated", "Total Budget", "Budget Expenditure", "Total Expenditure", "Unaccounted"],
+            [project["updated_at"], project["total_budget"], project["budget_allocation"], project["total_expenditure"],f"{project['unaccounted']:,}"]
+        ]
+
+        summary_table = Table(summary_data, colWidths=[1.5 * inch], hAlign='LEFT')
+        summary_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+            ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("LEFTPADDING", (0, 0), (-1, -1), 6),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ]))
+
+        elements.append(summary_table)
+        elements.append(Spacer(1, 0.3))
+
+        # === Expenses Title ===
+        elements.append(Paragraph("<b>Expenses</b>", styles["Heading3"]))
+        # elements.append(Spacer(1, 0.15 * inch))
+
+        # === Expenses Nested Table ===
+        expenses = project.get("expenses", [])
+
+        expense_data = [[
+            "Date", "Expense Category", "Item", "Qty", "Units", "Unit Cost", "Amount", "Remarks"
+        ]]
+
+        for exp in expenses:
+            expense_data.append([
+                exp["date"],
+                exp["category"],
+                exp["item"],
+                exp["quantity"],
+                exp["units"],
+                f"{exp['unit_cost']:,}",
+                f"{exp['amount']:,}",
+                exp["remarks"] or "-"
+            ])
+
+        if len(expenses) == 0:
+            expense_data.append(["No expenses found", "", "", "", "", "", ""])
+
+        expense_table = Table(expense_data, repeatRows=1, hAlign='LEFT')
+
+        if len(expenses) == 0:
+            expense_data.append(["No expenses found", "", "", "", "", "", ""])
+            expense_table.setStyle(TableStyle([
+                ("ALIGN", (0, 1), (-1, -1), "CENTER"),
+                ("SPAN", (0, 1), (-1, 1)),
+            ]))
+
+        expense_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("ALIGN", (1, 1), (4, -1), "RIGHT"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ]))
+
+        elements.append(expense_table)
+        # elements.append(Spacer(1, 0.5 * inch))
+        elements.append(
+            HRFlowable(
+                width="100%",      # or fixed width like 400
+                thickness=1,
+                color=colors.lightgrey,
+                spaceBefore=10,
+                spaceAfter=10
+            )
+        )
+
+    # Build PDF
+    doc.build(elements)
+    downloads_url = settings.MEDIA_URL + 'downloads'
+    return f'{downloads_url}/{filename}'

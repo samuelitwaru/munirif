@@ -10,6 +10,7 @@ For the full list of settings and their values, seehttps://munirif.pythonanywher
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 import os
 from dotenv import load_dotenv
@@ -20,25 +21,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv_path = os.path.join(BASE_DIR, '.env')
 load_dotenv(dotenv_path)
 
-# print('BASE_DIR:', dotenv_path)
-
-
-LOGGING = {
-    'version': 1,
-    'handlers': {
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': '../media/error.log',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    },
-}
 
 WHITENOISE_MANIFEST_STRICT = False
 
@@ -61,7 +43,23 @@ if os.getenv('STAGING') is None:
 else:
     STAGING = os.getenv('STAGING') == 'True'
 
-print(os.getenv('DEBUG'))
+if DEBUG == False:
+    LOGGING = {
+        'version': 1,
+        'handlers': {
+            'file': {
+                'class': 'logging.FileHandler',
+                'filename': '../media/error.log',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['file'],
+                'level': 'ERROR',
+                'propagate': True,
+            },
+        },
+    }
 
 ALLOWED_HOSTS = ['*']
 
@@ -75,6 +73,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'rest_framework.authtoken',
     'background_task',
     'accounts',
@@ -244,12 +243,20 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication'
+        'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+#     'ROTATE_REFRESH_TOKENS': True,
+#     'BLACKLIST_AFTER_ROTATION': True,
+# }
 
 PROPOSAL_FILES_DIR = MEDIA_ROOT / 'proposal_files'
 PROPOSAL_FILES_URL = MEDIA_URL + 'proposal_files'

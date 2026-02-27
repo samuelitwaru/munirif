@@ -6,6 +6,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 # Create your views here.
 # views.py
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User, Group
 from rest_framework.views import APIView
@@ -213,6 +214,31 @@ class LoginView(APIView):
         else:
             return Response({'error': ['Invalid credentials']}, status=status.HTTP_401_UNAUTHORIZED)
 
+# class LoginView(APIView):
+#     permission_classes = (AllowAny,)
+
+#     def post(self, request):
+#         username = request.data.get('username')
+#         password = request.data.get('password')
+
+#         user = authenticate(username=username, password=password)
+
+#         if user is not None:
+#             refresh = RefreshToken.for_user(user)
+
+#             user_data = UserSerializer(user).data
+#             user_data['groups'] = [group.name for group in user.groups.all()]
+
+#             return Response({
+#                 'access': str(refresh.access_token),
+#                 'refresh': str(refresh),
+#                 'user': user_data
+#             })
+
+#         return Response(
+#             {'error': ['Invalid credentials']},
+#             status=status.HTTP_401_UNAUTHORIZED
+#         )
 
 class LogoutView(APIView):
 
@@ -268,17 +294,18 @@ def update_user(request):
         token = Token.objects.get(key=request.data['token'])
         user = token.user
         data = request.data
-        user.first_name = data['first_name']
-        user.last_name = data['last_name']
-        user.email = data['username']
-        user.username = data['username']
+        print('data', data)
+        user.first_name = data.get('first_name')
+        user.last_name = data.get('last_name')
+        user.email = data.get('username')
+        user.username = data.get('username')
         user.save()
         profile, _ = Profile.objects.get_or_create(user=user)
-        profile.faculty_id = data['faculty']
-        profile.department_id = data['department']
-        profile.qualification_id = data['qualification']
-        profile.designation = data['designation']
-        profile.phone = data['phone']
+        profile.faculty_id = data.get('faculty')
+        profile.department_id = data.get('department')
+        profile.qualification_id = data.get('qualification')
+        profile.designation = data.get('designation')
+        profile.phone = data.get('phone')
         profile.save()
         
         user_data = UserSerializer(user).data

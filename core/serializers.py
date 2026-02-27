@@ -32,6 +32,11 @@ class ProjectObjectiveSerializer(serializers.ModelSerializer):
 
 class CallSerializer(serializers.ModelSerializer):
     period = serializers.CharField(read_only=True)
+    themes = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Theme.objects.all(),
+        # source="themes"   # important: map to related_name
+    )
     class Meta:
         model = Call
         fields = '__all__'
@@ -153,3 +158,6 @@ class EntitySerializer(serializers.ModelSerializer):
 
 class ExcelUploadSerializer(serializers.Serializer):
     file = serializers.FileField()
+
+class AwardSerializer(serializers.Serializer):
+    message = serializers.CharField()
