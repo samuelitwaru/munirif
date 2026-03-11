@@ -63,6 +63,7 @@ class UserViewSet(viewsets.ModelViewSet):
             profile.phone=request.data['phone']
             profile.gender=request.data['gender']
             profile.designation=request.data['designation']
+            profile.institution=request.data.get('institution')
             profile.save()
             theme_ids = request.data.get('themes')
             
@@ -123,6 +124,7 @@ class UserViewSet(viewsets.ModelViewSet):
         profile.phone=request.data['phone']
         profile.gender=request.data['gender']
         profile.designation=request.data['designation']
+        profile.institution=request.data.get('institution')
         profile.save()
 
         theme_ids = request.data.get('themes')
@@ -209,7 +211,10 @@ class LoginView(APIView):
             login(request, user)
             user_data = UserSerializer(user).data
             user_data['groups'] = [group.name for group in user.groups.all()]
-            token, _ = Token.objects.get_or_create(user=user)
+            token, created = Token.objects.get_or_create(user=user)
+            if not created:
+                token.delete()
+                token = Token.objects.create(user=user)
             return Response({'token': token.key, 'user': user_data})
         else:
             return Response({'error': ['Invalid credentials']}, status=status.HTTP_401_UNAUTHORIZED)
@@ -261,7 +266,10 @@ class DeleteAccountView(APIView):
         user.delete()
         return Response({"message": "Account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
-
+@api_view(['GET'])
+def refresh_token(request):
+    user = get_user_from_bearer_token(request)
+    return Response({'detail': 'Password successfully changed.'}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 # @permission_classes([IsAuthenticated])

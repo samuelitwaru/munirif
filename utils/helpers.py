@@ -1,11 +1,13 @@
+import re
+
 import pandas as pd
 from django.conf import settings
 from reportlab.lib import colors 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Paragraph, ListFlowable, ListItem, Spacer, HRFlowable, Table, TableStyle
+from reportlab.platypus import PageBreak, SimpleDocTemplate, Paragraph, ListFlowable, ListItem, Spacer, HRFlowable, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
@@ -17,33 +19,64 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from bs4 import BeautifulSoup
 from core.models import Section
+
+# pdfmetrics.registerFont(TTFont('TimesNewRoman', 'Times.ttf'))
+# pdfmetrics.registerFont(TTFont('TimesNewRoman-Bold', 'Timesbd.ttf'))
+# pdfmetrics.registerFont(TTFont('TimesNewRoman-Italic', 'Timesi.ttf'))
+# pdfmetrics.registerFont(TTFont('TimesNewRoman-BoldItalic', 'Timesbi.ttf'))
 
 
 def comma_separator(num):
     return "{:,}".format(num)
 
-def clean_and_convert_html(html_content):
-    html_content = clean_html(html_content)
+def clean_and_convert_html(html_content, style):
+    html_content = html_content.replace('\n', ' ')
+    html_content = html_content.replace('\r', ' ')
+    html_content = re.sub(r'(<div>  </div>)+', r'<br />', html_content)
+    html_content = html_content.replace('</div><div>', '</div><br /><div>')
+    # html_content = clean_html(html_content)
     styles = getSampleStyleSheet()
-    styleN = styles['Normal']
+    
     soup = BeautifulSoup(html_content, 'lxml')
     flowables = []
     # Iterate over the HTML elements
     if str(soup).strip():
         for element in soup.body:
-            if element.name == 'p':
-                flowables.append(Paragraph(str(element), styleN))
+            if element.name == 'p' or element.name == 'div':
+                flowables.append(Paragraph(str(element), style))
                 flowables.append(Spacer(1, 12))
             elif element.name == 'ul':
                 list_items = []
                 for li in element.find_all('li'):
-                    list_items.append(ListItem(Paragraph(str(li), styleN)))
+                    list_items.append(ListItem(Paragraph(str(li), style)))
                 flowables.append(ListFlowable(list_items, bulletType='bullet'))
+                flowables.append(Spacer(1, 12))
+            else:
+                flowables.append(Paragraph(str(element).strip(), style))
                 flowables.append(Spacer(1, 12))
 
     return flowables
+
+
+def split_html_blocks(html: str):
+    """
+    Returns a list containing the innerHTML of all <p> and <div> elements
+    in the order they appear.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    
+    blocks = []
+    
+    for tag in soup.find_all(["p", "div"]):
+        inner_html = "".join(str(child) for child in tag.contents).strip()
+        if inner_html:
+            blocks.append(inner_html)
+    
+    return blocks
 
 def clean_html(html_content):
     # Parse the HTML content
@@ -80,7 +113,12 @@ def write_proposal_pdf(file_name, proposal):
     file_path = f'{downloads_folder}/{file_name}'
 
     # Create a PDF document
-    doc = SimpleDocTemplate(file_path, pagesize=letter)
+    doc = SimpleDocTemplate(
+        file_path, pagesize=letter, leftMargin=0.5 * inch,
+        rightMargin=0.5 * inch,
+        topMargin=0.5 * inch,
+        bottomMargin=0.5 * inch
+    )
     story = []
     styles = getSampleStyleSheet()
     styleN = styles['Normal']
@@ -90,53 +128,83 @@ def write_proposal_pdf(file_name, proposal):
     table_style = TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), 'gray'),
         ('TEXTCOLOR', (0, 0), (-1, 0), 'white'),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
         ('INNERGRID', (0, 0), (-1, -1), 0.25, 'black'),
         ('BOX', (0, 0), (-1, -1), 0.25, 'black'),
+        ('FONTNAME', (0,0), (-1,-1), 'Times-Roman'),      # font (must be registered if TTF)
+        ('FONTSIZE', (0,0), (-1,-1), 12),
     ])
 
     title_style = ParagraphStyle(
         'centered',
         parent=styles['Heading1'],
-        alignment=1,  # 0=left, 1=center, 2=right
+        alignment=1,  # 0=left, 1=center, 2=right,
+        fontName='Times-Roman',
     )
 
     theme_style = ParagraphStyle(
         'centered',
         parent=styles['Heading2'],
         alignment=1,  # 0=left, 1=center, 2=right
+        fontName='Times-Roman',
+    )
+
+    p_style = ParagraphStyle(
+        name='CustomStyle',
+        fontName='Times-Roman',
+        fontSize=12,
+        leading=20,
+        alignment=TA_JUSTIFY
     )
     line = HRFlowable(width="100%", thickness=1, lineCap='round', color="black")
-    story.append(Paragraph('Title', title_style))
+    story.append(Paragraph('Title:', title_style))
     story.append(Paragraph(f'{proposal.title}', title_style))
     story.append(line)
-    story.append(Paragraph('Theme', theme_style))
+    story.append(Paragraph('Theme:', theme_style))
     story.append(Paragraph(f'{proposal.theme}', theme_style))
-
-    for section in Section.objects.all():
-        story.append(Paragraph(f'<h3>{section.title}</h3><br/>', styleH3))
+    available_height = doc.height
+    for section in Section.objects.exclude(name='attachments'):
+        section_flowables = []
+        title = Paragraph(f'<h3>{section.title}</h3><br/>', styleH2)
+        story.append(title)
+        section_flowables.append(title)
         if section.name == 'team':
             data = [['Full Name', 'Email', 'Telephone', 'Role']]
             for team in proposal.team_set.all():
-                data.append([team.full_name, team.email, team.telephone, team.role])
-            table = Table(data)
+                data.append([
+                    Paragraph(team.full_name, p_style), 
+                    team.email, 
+                    team.telephone, 
+                    team.role])
+            table = Table(data, hAlign='LEFT', colWidths=[2.5 * inch, 2.5 * inch, 1.3 * inch, 1.3 * inch])
             table.setStyle(table_style)
             story.append(table)
+            section_flowables.append(table)
         elif section.name == 'summary_budget':
             data = [['Item', 'Quantity', 'Units', 'Unit Cost', 'Total Cost']]
             total = 0
             for budg in proposal.budget_set.all():
-                budg_total = budg.total_cost*budg.quantity
-                data.append([budg.item, budg.quantity, budg.units, comma_separator(budg.total_cost), comma_separator(budg_total)])
+                budg_total = budg.unit_cost*budg.quantity
+                data.append([
+                    Paragraph(budg.item, p_style), 
+                    budg.quantity, budg.units, comma_separator(budg.unit_cost), comma_separator(budg_total)])
                 total += budg_total
             data.append(['Total', '','','', comma_separator(total)])
-            table = Table(data)
+            table = Table(data, hAlign='LEFT', colWidths=[2.5 * inch, 1 * inch, 1 * inch, 1.5 * inch, 1.5 * inch])
             table.setStyle(table_style)
             story.append(table)
         else:
-            flowables = clean_and_convert_html(getattr(proposal, section.name, '') or '')
+            flowables = clean_and_convert_html(getattr(proposal, section.name, '') or '', p_style)
             # story.append(Paragraph(content , styleN))
             story += flowables
+        
+        # check space left
+        available_height -= sum(flowable.wrap(doc.width, doc.height)[1] for flowable in flowables)
+        # print(f'after {section.name} available_height: {available_height}')
+        # if available_height < 100:  # If less than 100 units of space left, start a new page
+        #     story.append(PageBreak())
+        #     available_height = doc.height
 
     doc.build(story)
     return f'{downloads_url}/{file_name}'

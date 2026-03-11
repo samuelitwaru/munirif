@@ -8,21 +8,27 @@ class FileSerializer(serializers.ModelSerializer):
         model = File
         fields = '__all__'
 
+
 class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = '__all__'
+
 
 class BudgetCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = BudgetCategory
         fields = '__all__'
 
+
 class ExpenditureSerializer(serializers.ModelSerializer):
-    budget_category_title = serializers.CharField(source='budget_category.title', read_only=True)
+    budget_category_title = serializers.CharField(
+        source='budget_category.title', read_only=True)
+
     class Meta:
         model = Expenditure
         fields = '__all__'
+
 
 class ProjectObjectiveSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,9 +43,11 @@ class CallSerializer(serializers.ModelSerializer):
         queryset=Theme.objects.all(),
         # source="themes"   # important: map to related_name
     )
+
     class Meta:
         model = Call
         fields = '__all__'
+
 
 class ReportingDateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -58,11 +66,12 @@ class SectionSerializer(serializers.ModelSerializer):
         model = Section
         fields = '__all__'
 
+
 class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
         fields = '__all__'
-        
+
 
 class ProposalSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, source='file_set', read_only=True)
@@ -74,7 +83,8 @@ class ProposalSerializer(serializers.ModelSerializer):
     total_expenditure = serializers.IntegerField(read_only=True)
     total_budget = serializers.IntegerField(read_only=True)
     expenditures = ExpenditureSerializer(many=True, source='expenditure_set', read_only=True)
-    
+    screening_score = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Proposal
         fields = '__all__'
@@ -83,36 +93,78 @@ class ProposalSerializer(serializers.ModelSerializer):
             'theme': {'required': True},
         }
 
+        # fields = ['is_recommended', 'is_done_screening',
+        #           'title',
+        #           'theme',
+        #           'status',
+        #           'submission_date',
+        #           'user',
+        #           'call',
+        #           'problem',
+        #           'solution',
+        #           'outputs',
+        #           'team',
+        #           'capacity_development',
+        #           'scalability',
+        #           'ethical_implications',
+        #           'conflict_of_interest',
+        #           'summary_budget',
+        #           'detailed_budget',
+        #           'workplan',
+        #           'team_members',
+        #           'is_selected',
+        #           'budget_allocation'
+        #           ]
+
 
 class BudgetSerializer(serializers.ModelSerializer):
-    budget_category_title = serializers.CharField(source='budget_category.title', read_only=True)
+    budget_category_title = serializers.CharField(
+        source='budget_category.title', read_only=True)
+
     class Meta:
         model = Budget
         fields = '__all__'
+
 
 class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = '__all__'
-        
+
 
 class ProposalTeamSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 
+# class ScoreSerializer(serializers.ModelSerializer):
+#     user__first_name = serializers.CharField(source='user.first_name', read_only=True)
+#     user__last_name = serializers.CharField(source='user.last_name', read_only=True)
+#     user__username = serializers.CharField(source='user.username', read_only=True)
+#     total_score = serializers.IntegerField(read_only=True)
+#     percentage_score = serializers.IntegerField(read_only=True)
+#     proposal_detail = ProposalSerializer(source='proposal', read_only=True)
+
+#     class Meta:
+#         model = Score
+#         fields = '__all__'
+
+#     def create(self, validated_data):
+#         return super().create(validated_data)
+
 class ScoreSerializer(serializers.ModelSerializer):
-    user__first_name = serializers.CharField(source='user.first_name', read_only=True)
-    user__last_name = serializers.CharField(source='user.last_name', read_only=True)
-    user__username = serializers.CharField(source='user.username', read_only=True)
+    user__first_name = serializers.CharField(
+        source='user.first_name', read_only=True)
+    user__last_name = serializers.CharField(
+        source='user.last_name', read_only=True)
+    user__username = serializers.CharField(
+        source='user.username', read_only=True)
     total_score = serializers.IntegerField(read_only=True)
     percentage_score = serializers.IntegerField(read_only=True)
     proposal_detail = ProposalSerializer(source='proposal', read_only=True)
+
     class Meta:
         model = Score
         fields = '__all__'
-    
-    def create(self, validated_data):
-        return super().create(validated_data)
 
 
 class QualificationSerializer(serializers.ModelSerializer):
@@ -126,8 +178,10 @@ class DepartmentSerializer(serializers.ModelSerializer):
         model = Department
         fields = '__all__'
 
+
 class FacultySerializer(serializers.ModelSerializer):
     departments = DepartmentSerializer(many=True, source='department_set')
+
     class Meta:
         model = Faculty
         fields = '__all__'
@@ -135,22 +189,33 @@ class FacultySerializer(serializers.ModelSerializer):
 
 class ProfileThemeSerializer(serializers.ModelSerializer):
     theme_title = serializers.CharField(source='theme.title')
+
     class Meta:
         model = ProfileTheme
         fields = '__all__'
 
+
 class ProfileSerializer(serializers.ModelSerializer):
-    qualification_name = serializers.CharField(source='qualification.name', read_only=True)
+    qualification_name = serializers.CharField(
+        source='qualification.name', read_only=True)
     faculty_name = serializers.CharField(source='faculty.name', read_only=True)
-    department_name = serializers.CharField(source='department.name', read_only=True)
-    themes = ProfileThemeSerializer(many=True,read_only=True)
+    department_name = serializers.CharField(
+        source='department.name', read_only=True)
+    themes = ProfileThemeSerializer(many=True, read_only=True)
+
     class Meta:
         model = Profile
         fields = '__all__'
 
 
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = '__all__'
+
+
 class EntitySerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         model = Entity
         fields = '__all__'
@@ -158,6 +223,7 @@ class EntitySerializer(serializers.ModelSerializer):
 
 class ExcelUploadSerializer(serializers.Serializer):
     file = serializers.FileField()
+
 
 class AwardSerializer(serializers.Serializer):
     message = serializers.CharField()

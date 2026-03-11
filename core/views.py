@@ -149,38 +149,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
         file = create_project_template('template.xlsx', theme_titles, users, calls)
         host = get_host_name(request)
         return Response({'file_url':f'{host}{file}'})
-        return None
-        schema =  [
-            {
-                "name": "Title",
-                "validation": {"type": "textLength", "operator": "lessThanOrEqual", "formula1": 100},
-            },
-            {
-                "name": "Theme",
-                "validation": {"type": "list", "formula1": f'=Sheet2!$B$1:$B${len(theme_titles)+1}', "allow_blank": False},
-            },
-            {
-                "name": "Status",
-                "validation": {"type": "list", "formula1": '=Sheet2!$A$1:$A$2', "allow_blank": False},
-            },
-            {
-                "name": "PI",
-                "validation": {"type": "list", "formula1": f'=Sheet2!$C$1:$C${len(users)+1}', "allow_blank": False},
-            },
-            {
-                "name": "Call",
-                "validation": {"type": "list", "formula1": f'=Sheet2!$D$1:$D${len(calls)+1}', "allow_blank": True},
-            }
-        ]
-        list_references = {
-            "A": ['PENDING', 'SELECTED'],
-            "B": theme_titles,
-            "C": users,
-            "D": calls
-        }
-        file = generate_excel_from_schema(schema, list_references)
-        host = get_host_name(request)
-        return Response({'file_url':f'{host}{file}'})
+        
     
     @action(detail=False, methods=['POST'], name='upload_bulk', url_path=r'upload-bulk')
     def upload_bulk(self, request, *args, **kwargs):
@@ -189,7 +158,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
             excel_file = serializer.validated_data['file']
             wb = openpyxl.load_workbook(excel_file)
             sheet = wb.active
-            print(sheet.iter_rows(min_row=2, values_only=True))
             created = 0
             for idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True)):  # skip header row
                 # Assuming columns: First Name, Last Name, Email
@@ -459,6 +427,17 @@ class ScoreViewSet(viewsets.ModelViewSet):
         score = get_object_or_404(Score, id=pk)
         is_expired = timezone.now() > score.expires_at
         return Response({'is_expired': is_expired}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['GET'], name='accept_review', url_path=r'accept-review')
+    def accept_review(self, request, pk, *args, **kwargs):
+        score = get_object_or_404(Score, id=pk)
+        score.status = 'IN PROGRESS'
+        score.accepted_at = timezone.now()
+        score.save()
+        serializer = ScoreSerializer(score)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
 class FacultyViewSet(viewsets.ModelViewSet):
     queryset = Faculty.objects.all()
@@ -476,3 +455,20 @@ class EntityViewSet(viewsets.ModelViewSet):
     serializer_class = EntitySerializer
     permission_classes = [AllowAny]
 
+class DocumentViewSet(viewsets.ModelViewSet):
+    queryset = Document.objects.all()
+    serializer_class = DocumentSerializer
+    permission_classes = [AllowAny]
+
+    @action(detail=True, methods=['POST'], name='update_document', url_path=r'update-document')
+    def update_document(self, request, pk, *args, **kwargs):
+        serializer = DocumentSerializer(data=request.data)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            print('data', data)
+            instance = self.get_object()
+            if instance:
+                serializer.update(instance, data)
+            # serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

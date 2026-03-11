@@ -7,7 +7,7 @@ from django.dispatch import receiver
 import os
 from django.db.models.signals import pre_save, post_save, post_delete, pre_delete
 from django.dispatch import receiver
-from datetime import timedelta, date
+from datetime import datetime, timedelta, date
 from django.utils import timezone
 from middlewares.request_middleware import get_current_request
 
@@ -16,6 +16,7 @@ from utils.mails import send_html_email
 STATUS_CHOICES = [
     ('EDITING', 'EDITING'),
     ('SUBMITTED', 'SUBMITTED'),
+    ('SCREENED', 'SCREENED'),
     ('REVIEWING', 'REVIEWING'),
     ('REVIEWED', 'REVIEWED'),
     ('SELECTED', 'SELECTED'),
@@ -69,7 +70,7 @@ class Call(TimeStampedModel):
     
     @property
     def period(self):
-        today = date.today()
+        today = date.today() - timedelta(days=1)
         if not (self.date_from and self.date_to and self.submission_date and self.review_date and self.selection_date):
             return ""
         if self.date_from < today and self.submission_date > today:
@@ -83,7 +84,6 @@ class Call(TimeStampedModel):
         else:
             return "CLOSED"
 
-    
 class ReportingDate(TimeStampedModel):
     title = models.CharField(max_length=128)
     date = models.DateField()
@@ -113,8 +113,7 @@ class Attachment(models.Model):
 
     def __str__(self):
         return self.title
-
-
+    
 class Theme(TimeStampedModel):
     title = models.CharField(max_length=128)
     call = models.ForeignKey(Call, null=True, on_delete=models.SET_NULL)
@@ -127,13 +126,13 @@ class Proposal(TimeStampedModel):
     title = models.CharField(max_length=128)
     theme = models.ForeignKey(Theme, on_delete=models.CASCADE)
     status = models.CharField(max_length=64, default='EDITING', choices=STATUS_CHOICES) # editing, submitted, scoring, reviewed
-    submission_date = models.DateField(null=True)
+    submission_date = models.DateTimeField(null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     call = models.ForeignKey(Call, on_delete=models.SET_NULL, null=True)
     problem = models.TextField(null=True, blank=True)
     solution = models.TextField(null=True, blank=True)
     outputs = models.TextField(null=True, blank=True)
-    team  = models.TextField(null=True, blank=True)
+    team = models.TextField(null=True, blank=True)
     capacity_development = models.TextField(null=True, blank=True)
     scalability = models.TextField(null=True, blank=True)
     ethical_implications = models.TextField(null=True, blank=True)
@@ -144,6 +143,36 @@ class Proposal(TimeStampedModel):
     team_members = models.ManyToManyField(User, related_name='team_proposals', blank=True)
     is_selected = models.BooleanField(default=False)
     budget_allocation = models.PositiveIntegerField(default=0, null=True, blank=True)
+
+    problem_score = models.IntegerField(null=True, blank=True)
+    solution_score = models.IntegerField(null=True, blank=True)
+    outputs_score = models.IntegerField(null=True, blank=True)
+    team_score  = models.IntegerField(null=True, blank=True)
+    
+    capacity_development_score = models.IntegerField(null=True, blank=True)
+    scalability_score = models.IntegerField(null=True, blank=True)
+    ethical_implications_score = models.IntegerField(null=True, blank=True)
+    conflict_of_interest_score = models.IntegerField(null=True, blank=True)
+    summary_budget_score = models.IntegerField(null=True, blank=True)
+    detailed_budget_score = models.IntegerField(null=True, blank=True)
+    workplan_score = models.IntegerField(null=True, blank=True)
+    attachments_score = models.IntegerField(null=True, blank=True)
+
+    problem_comment = models.TextField(null=True, blank=True)
+    solution_comment = models.TextField(null=True, blank=True)
+    outputs_comment = models.TextField(null=True, blank=True)
+    team_comment  = models.TextField(null=True, blank=True)
+    
+    capacity_development_comment = models.TextField(null=True, blank=True)
+    scalability_comment = models.TextField(null=True, blank=True)
+    ethical_implications_comment = models.TextField(null=True, blank=True)
+    conflict_of_interest_comment = models.TextField(null=True, blank=True)
+    summary_budget_comment = models.TextField(null=True, blank=True)
+    detailed_budget_comment = models.TextField(null=True, blank=True)
+    workplan_comment = models.TextField(null=True, blank=True)
+    attachments_comment = models.TextField(null=True, blank=True)
+    is_recommended = models.BooleanField(default=False)
+    is_done_screening = models.BooleanField(default=False)
     
     def __str__(self):
         return self.title
@@ -174,6 +203,14 @@ class Proposal(TimeStampedModel):
         total = 0
         for budget in self.budget_set.all():
             total += budget.total_cost
+        return total
+    
+    @property
+    def screening_score(self):
+        sections = Section.objects.all()
+        total = 0
+        for section in sections:
+            total += (getattr(self, f"{section.name}_score")) or 0
         return total
     
 class BudgetCategory(models.Model):
@@ -341,6 +378,7 @@ class Profile(models.Model):
     phone = models.CharField(max_length=10)
     designation = models.CharField(max_length=32)
     settings = models.JSONField(default=dict, blank=True, null=True)
+    institution = models.CharField(max_length=128, null=True, blank=True)
     
     def __str__(self):
         return f'{self.user.first_name} {self.user.last_name}'
@@ -356,6 +394,11 @@ class Entity(models.Model):
     name = models.CharField(max_length=128)
     current_call = models.ForeignKey(Call, null=True, blank=True, on_delete=models.SET_NULL, related_name='current_call')
 
+class Document(models.Model):
+    title = models.CharField(max_length=128)
+    description = models.TextField(null=True, blank=True)
+    file = models.FileField(storage=file_storage)
+    call = models.ForeignKey(Call, on_delete=models.CASCADE)
 
 @receiver(post_save, sender=Score)
 @receiver(post_delete, sender=Score)
@@ -366,7 +409,7 @@ def on_score_status_change(sender, instance, **kwargs):
         proposal.status = 'REVIEWED'
     else:
         proposal.status = 'SUBMITTED'
-        proposal.submission_date = date.today()
+        proposal.submission_date = timezone.now()
     proposal.save()
 
 @receiver(post_save, sender=User)
@@ -388,7 +431,6 @@ def on_team_added_or_deleted(sender, instance, **kwargs):
     proposal.save()
 
 
-@receiver(post_save, sender=Budget)
 @receiver(post_delete, sender=Budget)
 def on_budget_added_or_deleted(sender, instance, **kwargs):
     proposal = instance.proposal
@@ -420,7 +462,7 @@ def send_proposal_submitted_email(sender, instance, **kwargs):
     
     if old_instance.status == 'EDITING' and instance.status == 'SUBMITTED':
         request = get_current_request()
-        user = User.objects.filter(groups__name='GRANTS_OFFICER').first()
+        user = User.objects.filter(groups__name='GRANTS_OFFICER').last()
         if not user:
             return
         context = {
