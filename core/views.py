@@ -8,7 +8,7 @@ from accounts.serializers import UserSerializer
 from core.filters import ProposalFilter, ReportFilter, ScoreFilter
 # from core.tasks import delete_expired_invitations
 from core.utils import create_project_template, generate_excel_from_schema
-from utils.helpers import comma_separator, generate_financial_report_pdf, get_host_name, write_proposal_pdf, write_xlsx_file
+from utils.helpers import comma_separator, generate_financial_report_pdf, generate_reviews_report_pdf, get_host_name, write_proposal_pdf, write_xlsx_file, generate_proposal_scores_pdf
 from datetime import datetime, timedelta
 from django.utils import timezone
 from utils.mails import send_html_email
@@ -51,7 +51,88 @@ class ProposalViewSet(viewsets.ModelViewSet):
             "has_next": page_obj.has_next(),
             "has_previous": page_obj.has_previous(),
         })
-   
+    
+    @action(detail=False, methods=['GET'], name='reviewed_proposals', url_path=r'reviewed')
+    def reviewed_proposals(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        reviewed_proposals = [proposal for proposal in queryset if proposal.is_reviewed]
+        serializer = self.get_serializer(reviewed_proposals, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['GET'], name='reviewed_proposals_count', url_path=r'reviewed/count')
+    def reviewed_proposals_count(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        reviewed_proposals = [proposal for proposal in queryset if proposal.is_reviewed]
+        count = len(reviewed_proposals)
+        return Response({'count': count})
+    
+    @action(detail=False, methods=['GET'], name='export', url_path=r'export')
+    def export(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        filename = 'proposals.xlsx'
+        filepath = settings.MEDIA_ROOT / f'downloads/{filename}'
+        workbook = xlsxwriter.Workbook(filepath)
+
+        header_format = workbook.add_format({
+            'bold': True,
+            'border': 1,
+            'align': 'center',
+            'bg_color': '#D9D9D9'
+        })
+
+        border_format = workbook.add_format({'border':1})
+
+        date_format = workbook.add_format({'num_format': 'yyyy-mm-dd'} | {'border':1})
+        headers = ['ID', 'Title', 'Submission Date', 'Status', 'PI']
+        worksheet = workbook.add_worksheet()
+        worksheet.write_row('A1', headers, header_format)
+        for index, proposal in enumerate(queryset):
+            if proposal.submission_date:
+                date = proposal.submission_date.strftime('%Y-%m-%d')
+            else:
+                date = ''
+            row = index + 1
+            worksheet.write(row, 0, proposal.id, border_format)
+            worksheet.write(row, 1, proposal.title, border_format)
+            worksheet.write(row, 2, date, date_format)
+            worksheet.write(row, 3, proposal.status, border_format)
+            worksheet.write(row, 4, f'{proposal.user.first_name} {proposal.user.last_name}', border_format)
+        
+        worksheet.autofit()
+        workbook.close()
+
+        HOST = get_host_name(request)
+        
+        return Response({
+            'file_url': f'{HOST}{settings.MEDIA_URL}downloads/{filename}'
+        })
+
+    @action(detail=False, methods=['GET'], name='export_reviews_pdf', url_path=r'export-reviews-pdf')
+    def export_reviews_pdf(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        sections = Section.objects.all()
+        queryset = queryset.filter(id=39)
+
+        # data.append(row);data.append(row);data.append(row);data.append(row);data.append(row)
+        filepath = generate_reviews_report_pdf('reviews-report.pdf', queryset, sections)
+        host = get_host_name(request)
+        # filepath = 'reviews-export.pdf'
+        return Response({'file_url':f'{host}{filepath}'})
+    
+    @action(detail=False, methods=['GET'], name='export_reviewed_pdf', url_path=r'reviewed/export/pdf')
+    def export_reviewed_proposals(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        print('queryset', queryset.count())
+
+        reviewed_proposal_ids = [proposal.id for proposal in queryset if proposal.is_reviewed]
+        queryset = queryset.filter(id__in=reviewed_proposal_ids)
+        sections = Section.objects.all()
+        # data.append(row);data.append(row);data.append(row);data.append(row);data.append(row)
+        filepath = generate_reviews_report_pdf('reviews-report.pdf', queryset, sections)
+        host = get_host_name(request)
+        # filepath = 'reviews-export.pdf'
+        return Response({'file_url':f'{host}{filepath}'})
+    
     @action(detail=False, methods=['GET'], name='count', url_path=r'count')
     def count(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -108,8 +189,35 @@ class ProposalViewSet(viewsets.ModelViewSet):
         columns = ['Section'] + [str(score.user) for score in scores] + ['TOTAL', 'AVERAGE']
 
         foot = ['TOTAL'] + [f'=sum({chr(num)}2:{chr(num)}{len(rows)+1})' for num in range(ord('b'), ord('b')+len(scores))]
+        strengths = ['Strengths'] + [score.strengths for score in scores]
+        weaknesses = ['Weaknesses'] + [score.weaknesses for score in scores]
         rows.append(foot)
+        rows.append(strengths)
+        rows.append(weaknesses)
+
         file = write_xlsx_file(f'score-sheet-{proposal.id}.xlsx', columns, rows)
+        host = get_host_name(request)
+        return Response({'file_url':f'{host}{file}'}) 
+    
+    @action(detail=True, methods=['GET'], name='download_score_sheet_pdf', url_path=r'score-sheet/download/pdf')
+    def download_score_sheet_pdf(self, request, pk, *args, **kwargs):
+        proposal = Proposal.objects.get(id=pk)
+        sections = Section.objects.all()
+        scores = proposal.score_set.all()
+        rows = []
+        for index, section in enumerate(sections):
+            if section.max_score > 0:
+                data = [section.title] + [getattr(score, section.name) for score in scores]
+                rows.append(data)
+        columns = [''] + [f'{score.user.first_name} {score.user.last_name}' for score in scores]
+
+        foot = ['TOTAL'] + [score.total_score for score in scores]
+        strengths = ['Strengths'] + [score.strengths for score in scores]
+        weaknesses = ['Weaknesses'] + [score.weaknesses for score in scores]
+        rows.append(foot)
+        rows.append(strengths)
+        rows.append(weaknesses)
+        file = generate_proposal_scores_pdf(f'score-sheet-{proposal.id}.pdf', proposal, columns, rows)
         host = get_host_name(request)
         return Response({'file_url':f'{host}{file}'}) 
     
@@ -129,7 +237,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
         file = write_xlsx_file(f'expenses-{proposal.id}.xlsx', columns, rows)
         host = get_host_name(request)
         return Response({'file_url':f'{host}{file}'}) 
-    
 
     @action(detail=True, methods=['GET'], name='download_pdf', url_path=r'pdf/download')
     def download_pdf(self, request, pk, *args, **kwargs):
@@ -150,7 +257,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
         host = get_host_name(request)
         return Response({'file_url':f'{host}{file}'})
         
-    
     @action(detail=False, methods=['POST'], name='upload_bulk', url_path=r'upload-bulk')
     def upload_bulk(self, request, *args, **kwargs):
         serializer = ExcelUploadSerializer(data=request.data)
@@ -268,7 +374,8 @@ class ExpenditureViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'], name='financial_report', url_path=r'financial-report/download')
     def financial_report(self, request, *args, **kwargs):
         entity = Entity.objects.first()
-        proposals = Proposal.objects.filter(is_selected=True, call=entity.current_call.id)
+        call_id = request.query_params.get('call') or entity.current_call.id
+        proposals = Proposal.objects.filter(is_selected=True, call=call_id)
         headers = ['Project', 'Last Updated', 'Budget', 'Allocated', 'Accounted', 'Unaccounted']
         data = []
 
@@ -310,8 +417,7 @@ class ExpenditureViewSet(viewsets.ModelViewSet):
         worksheet.write_row('A1', headers, header_format)
         for row_num, row_data in enumerate(data, start=1):
             worksheet.write_row(row_num, 0, row_data)
-        
-        worksheet.write_row(row_num+1, 0, totals_row)
+            worksheet.write_row(row_num+1, 0, totals_row)
         
         worksheet.set_column('B:B', 15, date_format)
         worksheet.set_column('C:G', 15, currency_format)
@@ -349,7 +455,6 @@ class ExpenditureViewSet(viewsets.ModelViewSet):
                     } for exp in prop.expenditure_set.all()]
             }
             data.append(row)
-        # data.append(row);data.append(row);data.append(row);data.append(row);data.append(row)
         filepath = generate_financial_report_pdf('financial-report.pdf', data)
         host = get_host_name(request)
         return Response({'file_url':f'{host}{filepath}'})
@@ -421,6 +526,12 @@ class ScoreViewSet(viewsets.ModelViewSet):
             context
         )
         return super().create(request, *args, **kwargs)
+
+    @action(detail=False, methods=['GET'], name='count', url_path=r'count')
+    def count(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        count = queryset.count()
+        return Response({'count': count})
 
     @action(detail=True, methods=['GET'], name='validate', url_path=r'validate')
     def validate(self, request, pk, *args, **kwargs):

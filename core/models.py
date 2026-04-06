@@ -213,6 +213,12 @@ class Proposal(TimeStampedModel):
             total += (getattr(self, f"{section.name}_score")) or 0
         return total
     
+    @property
+    def is_reviewed(self):
+        return self.score_set.filter(status='COMPLETED').count() == self.score_set.count() and self.score_set.count() > 0
+    
+
+
 class BudgetCategory(models.Model):
     title = models.CharField(max_length=128)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, null=True, blank=True)
@@ -405,10 +411,11 @@ class Document(models.Model):
 def on_score_status_change(sender, instance, **kwargs):
     proposal = instance.proposal
     scores = proposal.score_set.all()
-    if all(list(map(lambda x: x.status=='COMPLETED', scores))):
+    
+    if len(scores) and all(list(map(lambda x: x.status=='COMPLETED', scores))):
         proposal.status = 'REVIEWED'
     else:
-        proposal.status = 'SUBMITTED'
+        # proposal.status = 'SUBMITTED'
         proposal.submission_date = timezone.now()
     proposal.save()
 
@@ -471,6 +478,34 @@ def send_proposal_submitted_email(sender, instance, **kwargs):
         subject = 'PROPOSAL SUBMITTED'
         html_template = 'emails/proposal-submitted.html'
         send_mail = True
+    elif old_instance.status == 'SUBMITTED' and instance.status == 'SCREENED':
+        request = get_current_request()
+        user = instance.user
+        if not user:
+            return
+        sections = Section.objects.all()
+        data = []
+        for section in sections:
+            if section.max_score > 0:
+                data.append({
+                    'name': section.title,
+                    'score': getattr(instance, f'{section.name}_score'),
+                    'comment': getattr(instance, f'{section.name}_comment')
+                })
+        data.append(
+            {
+                'name': 'Total',
+                'score': f'{instance.screening_score} %',
+                'comment': ''
+            }
+        )
+        context = {
+            'user': user, 'proposal':instance, 'client_address': settings.CLIENT_ADDRESS,
+            'data': data,
+        }
+        subject = 'PROPOSAL SCREENED'
+        html_template = 'emails/proposal-screened.html'
+        send_mail = True
 
         
     elif old_instance.status == 'REVIEWED' and instance.status == 'SELECTED':
@@ -482,7 +517,7 @@ def send_proposal_submitted_email(sender, instance, **kwargs):
         html_template = 'emails/proposal-selected.html'
         send_mail = True
     if send_mail:
-        send_html_email(request, subject, [], html_template, context)
+        send_html_email(request, subject, [user.email], html_template, context)
 
 @receiver(post_save, sender=Call)
 def on_call_added(sender, instance, **kwargs):

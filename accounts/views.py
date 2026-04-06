@@ -302,7 +302,6 @@ def update_user(request):
         token = Token.objects.get(key=request.data['token'])
         user = token.user
         data = request.data
-        print('data', data)
         user.first_name = data.get('first_name')
         user.last_name = data.get('last_name')
         user.email = data.get('username')

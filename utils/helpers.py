@@ -22,13 +22,46 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from bs4 import BeautifulSoup
-from core.models import Section
+from core.models import Score, Section
 
-# pdfmetrics.registerFont(TTFont('TimesNewRoman', 'Times.ttf'))
-# pdfmetrics.registerFont(TTFont('TimesNewRoman-Bold', 'Timesbd.ttf'))
-# pdfmetrics.registerFont(TTFont('TimesNewRoman-Italic', 'Timesi.ttf'))
-# pdfmetrics.registerFont(TTFont('TimesNewRoman-BoldItalic', 'Timesbi.ttf'))
+styles = getSampleStyleSheet()
+styleN = styles['Normal']
+styleH1 = styles['Heading1']
+styleH2 = styles['Heading2']
+styleH3 = styles['Heading3']
 
+title_style = ParagraphStyle(
+    'centered',
+    parent=styles['Heading1'],
+    alignment=1,  # 0=left, 1=center, 2=right,
+    fontName='Times-Roman',
+)
+
+theme_style = ParagraphStyle(
+    'centered',
+    parent=styles['Heading2'],
+    alignment=1,  # 0=left, 1=center, 2=right
+    fontName='Times-Roman',
+)
+
+p_style = ParagraphStyle(
+    name='CustomStyle',
+    fontName='Times-Roman',
+    fontSize=12,
+    leading=20,
+    alignment=TA_JUSTIFY
+)
+
+table_style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), 'gray'),
+        ('TEXTCOLOR', (0, 0), (-1, 0), 'white'),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('INNERGRID', (0, 0), (-1, -1), 0.25, 'black'),
+        ('BOX', (0, 0), (-1, -1), 0.25, 'black'),
+        ('FONTNAME', (0,0), (-1,-1), 'Times-Roman'),      # font (must be registered if TTF)
+        ('FONTSIZE', (0,0), (-1,-1), 12),
+    ])
 
 def comma_separator(num):
     return "{:,}".format(num)
@@ -120,43 +153,7 @@ def write_proposal_pdf(file_name, proposal):
         bottomMargin=0.5 * inch
     )
     story = []
-    styles = getSampleStyleSheet()
-    styleN = styles['Normal']
-    styleH1 = styles['Heading1']
-    styleH2 = styles['Heading2']
-    styleH3 = styles['Heading3']
-    table_style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), 'gray'),
-        ('TEXTCOLOR', (0, 0), (-1, 0), 'white'),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('INNERGRID', (0, 0), (-1, -1), 0.25, 'black'),
-        ('BOX', (0, 0), (-1, -1), 0.25, 'black'),
-        ('FONTNAME', (0,0), (-1,-1), 'Times-Roman'),      # font (must be registered if TTF)
-        ('FONTSIZE', (0,0), (-1,-1), 12),
-    ])
-
-    title_style = ParagraphStyle(
-        'centered',
-        parent=styles['Heading1'],
-        alignment=1,  # 0=left, 1=center, 2=right,
-        fontName='Times-Roman',
-    )
-
-    theme_style = ParagraphStyle(
-        'centered',
-        parent=styles['Heading2'],
-        alignment=1,  # 0=left, 1=center, 2=right
-        fontName='Times-Roman',
-    )
-
-    p_style = ParagraphStyle(
-        name='CustomStyle',
-        fontName='Times-Roman',
-        fontSize=12,
-        leading=20,
-        alignment=TA_JUSTIFY
-    )
+    
     line = HRFlowable(width="100%", thickness=1, lineCap='round', color="black")
     story.append(Paragraph('Title:', title_style))
     story.append(Paragraph(f'{proposal.title}', title_style))
@@ -208,6 +205,31 @@ def write_proposal_pdf(file_name, proposal):
 
     doc.build(story)
     return f'{downloads_url}/{file_name}'
+
+def generate_proposal_scores_pdf(file_name, proposal, columns, rows):
+    downloads_folder = settings.MEDIA_ROOT / 'downloads'
+    downloads_url = '/media/downloads'
+    file_path = f'{downloads_folder}/{file_name}'
+    doc = SimpleDocTemplate(
+        file_path, pagesize=letter, leftMargin=0.5 * inch,
+        rightMargin=0.5 * inch,
+        topMargin=0.5 * inch,
+        bottomMargin=0.5 * inch
+    )
+    story = []
+    story.append(Paragraph('Reviews:', styleH1))
+    story.append(Paragraph(f'{proposal.title}', styleH2))
+    
+    rows.insert(0, columns)
+    
+    scores_table = Table(rows, hAlign='LEFT')
+    scores_table.setStyle(table_style)
+    story.append(scores_table)
+    doc.build(story)
+    return f'{downloads_url}/{file_name}'
+    
+
+
 
 def generate_financial_report_pdf(filename, data):
     """
@@ -318,6 +340,119 @@ def generate_financial_report_pdf(filename, data):
                 spaceAfter=10
             )
         )
+
+    # Build PDF
+    doc.build(elements)
+    downloads_url = settings.MEDIA_URL + 'downloads'
+    return f'{downloads_url}/{filename}'
+
+
+def generate_reviews_report_pdf(filename, proposals, sections):
+    downloads_folder = settings.MEDIA_ROOT / 'downloads'
+    downloads_url = '/media/downloads'
+    file_path = f'{downloads_folder}/{filename}'
+
+    data = []
+    # score_headers = [''] + [sec.title for sec in sections if sec.max_score > 0] + ['Total','Strengths','Weaknesses']
+    proposal_headers = ["Theme", "PI", "Status", "Submission Date"]
+    for prop in proposals:
+        scores = Score.objects.filter(proposal_id=prop.id).all()
+        scores_count = scores.count()
+        score_headers = [''] 
+        for score in scores:
+            if score.user: score_headers.append(Paragraph(f'{score.user.first_name} {score.user.last_name} <br/> ({score.status})'))
+            else: score_headers.append('')
+        row = {
+            "id": prop.id,
+            "title": prop.title,
+            "submission_date": '',
+            "theme":prop.theme.title,
+            "pi":  f'{prop.user.first_name} {prop.user.last_name}', 
+            "status": prop.status, 
+            "scores": [score_headers],
+            "scores_count": scores_count
+        }
+
+        if prop.submission_date:
+            row['submission_date'] = prop.submission_date.strftime('%Y-%m-%d')
+
+        for section in sections:
+            if section.max_score > 0:
+                section_scores = [Paragraph(section.title)]
+                for score in scores:
+                    section_scores.append(getattr(score, f'{section.name}'))
+                row['scores'].append(section_scores)  
+        row['scores'].append(["TOTAL"] + [Paragraph(f"{score.total_score}") for score in scores])
+        row['scores'].append(["STRENGTHS"] + [Paragraph(score.strengths or '') for score in scores])
+        row['scores'].append(["WEAKNESSES"] + [Paragraph(score.weaknesses or '') for score in scores])
+        row['scores'].append(["RECOMMENDED FOR FUNDING"] + [Paragraph(f"{'Yes' if score.is_recommended else 'No'}") for score in scores])
+        data.append(row)
+
+    doc = SimpleDocTemplate(
+        file_path, pagesize=A4, 
+        rightMargin=20,
+        leftMargin=20,
+        topMargin=20,
+        bottomMargin=20
+    )
+    elements = []
+    styles = getSampleStyleSheet()
+
+    for project in data:
+        # === Project Title ===
+        elements.append(Paragraph(f"<b>Project:</b> {project['title']} {project["id"]}", styles["Heading2"]))
+        # elements.append(Spacer(1, 0.2 * inch))
+
+        summary_data = [
+            proposal_headers,
+            [Paragraph(project["theme"]), Paragraph(project["pi"]), Paragraph(project["status"]), Paragraph(project['submission_date'])]
+        ]
+
+        summary_table = Table(summary_data, colWidths=[1.5 * inch], hAlign='LEFT')
+        summary_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+            ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("LEFTPADDING", (0, 0), (-1, -1), 6),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ]))
+
+        elements.append(summary_table)
+        elements.append(Spacer(1, 0.3))
+
+        # === Expenses Title ===
+        elements.append(Paragraph("<b>Scores</b>", styles["Heading4"]))
+        # elements.append(Spacer(1, 0.15 * inch))
+
+        scores_data = project["scores"]
+
+        scores_table = Table(scores_data, repeatRows=1, hAlign='LEFT')
+
+        scores_table_style = [
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ]
+
+        if project["scores_count"] > 0:
+            scores_table_style.append(("BACKGROUND", (0, -4), (-1, -4), colors.lightgrey))
+        scores_table.setStyle(TableStyle(scores_table_style))
+
+        elements.append(scores_table)
+        # elements.append(Spacer(1, 0.5 * inch))
+        elements.append(
+            HRFlowable(
+                width="100%",      # or fixed width like 400
+                thickness=1,
+                color=colors.lightgrey,
+                spaceBefore=10,
+                spaceAfter=10
+            )
+        )
+        elements.append(PageBreak())
 
     # Build PDF
     doc.build(elements)

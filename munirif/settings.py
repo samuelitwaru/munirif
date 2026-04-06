@@ -135,8 +135,6 @@ MYSQL_SETTINGS = {
     'PORT': os.getenv('DB_PORT') or '3306',
 }
 
-print('DB_NAME:', os.getenv('DB_NAME'))
-
 
 
 DATABASES = {
@@ -203,6 +201,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://192.168.0.102:9000',
     'https://muni-rif.web.app',
     'https://munirif.ecdouganda.org',
+    'http://gms.ecdouganda.org',
     'https://gms.muni.ac.ug',
     'https://10.1.0.28',
     'https://137.63.168.52'
